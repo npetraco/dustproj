@@ -1,0 +1,13 @@
+Package: dustproj
+Type: Package
+Title: Data IO and Slicing/Dicing for the Dust Projects
+Version: 0.1.0
+Author: I wrote it.
+Maintainer: Nicholas Petraco <npetraco@gmail.com>
+Description: Data IO and slicing/dicing for the dust projects.
+    Commodity stuff that covers all the dust projects. Some portions of old projects not included, such as daugman.R.
+License: Why would you want this??
+Encoding: UTF-8
+LazyData: true
+Depends: xlsx (>= 0.5.7)
+RoxygenNote: 5.0.1
