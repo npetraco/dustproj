@@ -9,5 +9,5 @@ Description: Data IO and slicing/dicing for the dust projects.
 License: Why would you want this??
 Encoding: UTF-8
 LazyData: true
-Depends: xlsx (>= 0.5.7)
+Depends: xlsx (>= 0.5.7), readxl (>= 0.1.1)
 RoxygenNote: 5.0.1
