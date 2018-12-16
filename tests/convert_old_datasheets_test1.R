@@ -7,11 +7,13 @@ library(dustproj)
 # convert.datasheet("inst/WTCk_datasheet.xlsx", study.name = "WTCk")
 # convert.datasheet("inst/WTCq_datasheet.xlsx", study.name = "WTCq")
 
-convert.datasheet("inst/Original_datasheet.xlsx", study.name = "Original", "inst/category_conversion_tables2a.xlsx", print.level = 0)
-convert.datasheet("inst/FloridaPhase1_datasheet.xlsx", study.name = "FloridaPhase1", "inst/category_conversion_tables2a.xlsx", print.level = 0)
-convert.datasheet("inst/FloridaPhase2_datasheet2_mod.xlsx", study.name = "FloridaPhase2", "inst/category_conversion_tables2a.xlsx", print.level = 0)
-convert.datasheet("inst/WTCk_datasheet.xlsx", study.name = "WTCk", "inst/category_conversion_tables2a.xlsx", print.level = 0)
-convert.datasheet("inst/WTCq_datasheet.xlsx", study.name = "WTCq", "inst/category_conversion_tables2a.xlsx", print.level = 0)
+junk <- convert.datasheet("inst/Original_datasheet.xlsx", study.name = "Original", "inst/category_conversion_tables2a.xlsx", print.level = 0)
+junk <- convert.datasheet("inst/FloridaPhase1_datasheet.xlsx", study.name = "FloridaPhase1", "inst/category_conversion_tables2a.xlsx", print.level = 0)
+junk <- convert.datasheet("inst/FloridaPhase2_datasheet2_mod.xlsx", study.name = "FloridaPhase2", "inst/category_conversion_tables2a.xlsx", print.level = 0)
+junk <- convert.datasheet("inst/WTCk_datasheet.xlsx", study.name = "WTCk", "inst/category_conversion_tables2a.xlsx", print.level = 1)
+junk <- convert.datasheet("inst/WTCq_datasheet.xlsx", study.name = "WTCq", "inst/category_conversion_tables2a.xlsx", print.level = 2)
+
+head(junk)
 #
 
 

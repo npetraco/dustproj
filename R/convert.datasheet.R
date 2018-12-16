@@ -48,13 +48,7 @@ convert.datasheet<-function(fpath.datasheet, study.name, fpath.convertion.table,
   scl.namechgs.col.idx <- which(conversion.tabl[1,]=="Subclass Changes") # Column index for stipulated subclass name changes
   scl.namechgs         <- conversion.tabl[,scl.namechgs.col.idx]       # Drop the first row because of the format of conversion.tbl
 
-  #print(length(ref.cl.scl))
-  #print(length(study.cl.scl))
-  #print(length(cl.namechgs))
-  #print(length(scl.namechgs))
-  #study2ref.cl.scl <- cbind(ref.cl.scl, study.cl.scl) # Class/Subclass name conversions collected together
   study2ref.cl.scl <- cbind(ref.cl.scl, study.cl.scl, cl.namechgs, scl.namechgs) # Class/Subclass name conversions collected together
-  #print(study2ref.cl.scl)
 
   # Study Reference attributes from conversion table
   attribs.idx        <- which(conversion.tabl[1,]=="Attributes")           # Column index where the attribute infor begins
@@ -65,45 +59,12 @@ convert.datasheet<-function(fpath.datasheet, study.name, fpath.convertion.table,
   ref.attribs.idxs <- which(conversion.tabl[,attribs.idx] == "NEW") # Row numbers for the Reference attribute names
   ref.attribs      <- as.character(as.matrix(conversion.tabl[ref.attribs.idxs,(attribs.idx+1):ncol(conversion.tabl)]))
 
-  #print(study.attribs)
-  #print(ref.attribs)
-  print(cbind(ref.attribs,study.attribs))
-  print(length(study.attribs))
-  print(length(ref.attribs))
+  if(length(ref.attribs) != length(study.attribs)){
+    stop("Length of NEW attributs not the same as length of specified study attributes. Check for stray spaces or other problems.")
+  }
+  study2ref.attribs <- cbind(ref.attribs,study.attribs)
 
-
-  # # Study Reference attributes from conversion table
-  # attribs.idx        <- which(conversion.tabl[1,]=="Attributes")           # Column index where the attribute infor begins
-  # study.attribs.idxs <- which(conversion.tabl[,attribs.idx] == study.name) # Row numbers for the study's recorded attribute names
-  # study.attribs      <- unique(as.character(as.matrix(conversion.tabl[study.attribs.idxs,(attribs.idx+1):ncol(conversion.tabl)])))
-  # #study.attribs      <- study.attribs[-which(is.na(study.attribs) == TRUE)]
-  # print(study.attribs)
-  #
-  # # NEW Reference attributes from conversion table
-  # ref.attribs.idxs <- which(conversion.tabl[,attribs.idx] == "NEW") # Row numbers for the Reference attribute names
-  # ref.attribs      <- unique(as.character(as.matrix(conversion.tabl[ref.attribs.idxs,(attribs.idx+1):ncol(conversion.tabl)])))
-  # #ref.attribs      <- ref.attribs[-which(is.na(ref.attribs) == TRUE)]
-  # ref.attribs      <- ref.attribs[-which(ref.attribs == "ADD-Other")] # Drop any "ADD-Other" due to the way the conversion table is formatted.
-  # #ref.attribs[which(ref.attribs == "ADD-Other")] <- NA
-  # print(ref.attribs)
-  # print(length(study.attribs))
-  # print(length(ref.attribs))
-  # # The ref.attribs and study.attribs are likely not the same length.
-  # # Figure out which is longer and pad the other to the same length.
-  # # ** NOTE: ** THIS ASSUMES THE DISCREPANCY IS AT THE END OF THE VECTORS AND
-  # # THAT ONCE PADDED EVERYTHING WILL LINE UP CORRECTLY !!!!!!
-  # if(length(study.attribs) > length(ref.attribs)) {
-  #   pad.leng <- length(study.attribs) - length(ref.attribs)
-  #   ref.attribs <- c(ref.attribs, rep(NA,pad.leng))
-  # } else if(length(ref.attribs) > length(study.attribs)){
-  #   pad.leng <- length(ref.attribs) - length(study.attribs)
-  #   study.attribs <- c(study.attribs, rep(NA,pad.leng))
-  # } else {
-  #   condl.trash <- NULL # Just to have something to do if vectors are the same length.
-  # }
-  # print(cbind(ref.attribs, study.attribs))
-
-  # look up idx of unq in stdy stdy col. use that idx to look up ref name in stdy ref col
+  # Look up idx of unq in stdy stdy col. use that idx to look up ref name in stdy ref col
   # Convert class names:
   for(i in 1:length(unique.classes)){
     dsheet.cl.idxs <- which(dsheet.categ.mat[,1] == unique.classes[i])
@@ -112,7 +73,6 @@ convert.datasheet<-function(fpath.datasheet, study.name, fpath.convertion.table,
     cl.chg.idx <- which(study2ref.cl.scl[,2] == unique.classes[i])
     dsheet.categ.mat.new[dsheet.cl.idxs,1] <- as.character(as.matrix(study2ref.cl.scl[cl.chg.idx,1]))
   }
-  #print(dsheet.categ.mat.new[,1])
 
   # Convert subclass names, AND make any stipulated class name adjustments
   for(i in 1:length(unique.subclasses)){
@@ -139,7 +99,6 @@ convert.datasheet<-function(fpath.datasheet, study.name, fpath.convertion.table,
           if(print.level>=1){
             # Found the subclass name in the reference study subclass names:
             cat("Subclass name:", unique.subclasses[i], "is not in the reference study subclass names.\nIt is in the new datasheet reference subclass names, so we'll use this name.\n\n" )
-            #print(paste("**Found in**: New ref scl nme:", study2ref.cl.scl[poss.ref.scl.mch.idx,1], "Loaded scl nme", unique.subclasses[i]))
           } else {
             condl.trash <- NULL # Just to have something to do if we don't print at this level
           }
@@ -154,8 +113,9 @@ convert.datasheet<-function(fpath.datasheet, study.name, fpath.convertion.table,
 
         # Handel subclass names we will toss:
         for(j in 1:length(scl.chg.idx)) {
-          #print(study2ref.cl.scl[scl.chg.idx,1])
+
           skipQ <- unique(study2ref.cl.scl[scl.chg.idx,1])
+
           if(length(skipQ) != 1) {
             print(paste("xxxxxxx",study2ref.cl.scl[scl.chg.idx,1], "xxxxxxxx"))
             stop("Problem! These should be uniquely SKIP!")
@@ -175,7 +135,6 @@ convert.datasheet<-function(fpath.datasheet, study.name, fpath.convertion.table,
       }
     } else {
       # ****************Do the name conversion
-      #print("Changing")
       # Look first for the subclassname change in the NEW column.
       # If not found look in the Subclass Change column:
       if(is.na(study2ref.cl.scl[scl.chg.idx,1])){
@@ -228,16 +187,63 @@ convert.datasheet<-function(fpath.datasheet, study.name, fpath.convertion.table,
       }
 
     }
-    #print(as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,2])))
-    #print(as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,1])))
   }
 
-  # for(i in 1:length(unique.attributes)){
-  #   dsheet.attribs.idxs <- which(dsheet.categ.mat[,3] == unique.attributes[i])
-  #   attribs.chg.idx     <- which(study2ref.cl.scl[,3] == unique.attributes[i])
-  #   # dsheet.categ.mat.new[dsheet.cl.idxs,1] <- as.character(as.matrix(study2ref.cl.scl[cl.chg.idx,1]))
-  # }
+  for(i in 1:length(unique.attributes)){
 
-  #print(study2ref.cl.scl)
-  #print(dsheet.categ.mat.new)
+    dsheet.attribs.idxs <- which(dsheet.categ.mat[,3] == unique.attributes[i])
+
+    if(is.na(unique.attributes[i])){
+      stop("NA unique attribute encountered!")
+    }
+
+    attribs.chg.idx <- which(study2ref.attribs[,2] == unique.attributes[i])
+    dsheet.categ.mat.new[dsheet.attribs.idxs,3] <- as.character(as.matrix(study2ref.attribs[attribs.chg.idx[1],1]))
+  }
+
+
+  # Clean up:
+  # Add in 0/1
+  dsheet.categ.mat.new <- data.frame(dsheet.categ.mat.new, dsheet.info[[1]])
+  colnames(dsheet.categ.mat.new) <- c("Class","Subclass","Attribute","Indicator")
+
+  # Eliminate SKIPs wrt col 2,3:
+  skip.idxs <- c(which(dsheet.categ.mat.new[,2] == "SKIP"),which(dsheet.categ.mat.new[,3] == "SKIP"))
+
+  # Check for 1s in proposed eliminated rows and print a warning if there are any:
+  if(1 %in% dsheet.categ.mat.new[skip.idxs,4]){
+    print("xxxxxxxxxxxxx WARNING: SKIPPING THESE CELLS THOUGH THEY HAVE A 1 xxxxxxxxxx")
+    print(dsheet.categ.mat.new[skip.idxs[which(dsheet.categ.mat.new[skip.idxs,4] == 1)],])
+    if(print.level >= 2){
+      print("This is what the original class, subclass and attribute names were:")
+      print(dsheet.categ.mat[skip.idxs[which(dsheet.categ.mat.new[skip.idxs,4] == 1)],])
+    }
+    warning("Proposed SKIP rows contain 1s!")
+    print("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+  }
+  dsheet.categ.mat.new <- dsheet.categ.mat.new[-skip.idxs,]
+
+  # Change Various attrib clear to ColorNR
+  vclear.idxs <- which((dsheet.categ.mat.new[,1]=="Various") & (dsheet.categ.mat.new[,3]=="Clear"))
+  dsheet.categ.mat.new[vclear.idxs,3] <- "ColorNR"
+
+  # Elim all Various not ColorNR
+  skip.idxs2 <- which((dsheet.categ.mat.new[,1]=="Various") & (dsheet.categ.mat.new[,3]!="ColorNR"))
+  #print(dsheet.categ.mat.new[skip.idxs2,])
+  # Check for 1s in the second round of proposed eliminated rows and throw error if there are any:
+  if(1 %in% dsheet.categ.mat.new[skip.idxs2,4]){
+    print("x-x-x-x-x-x-x WARNING: SKIPPING THESE CELLS THOUGH THEY HAVE A 1 x-x-x-x-x-x")
+    print(dsheet.categ.mat.new[skip.idxs[which(dsheet.categ.mat.new[skip.idxs2,4] == 1)],])
+    if(print.level >= 2){
+      print("This is what the original class, subclass and attribute names were:")
+      print(dsheet.categ.mat[skip.idxs2[which(dsheet.categ.mat.new[skip.idxs2,4] == 1)],])
+    }
+    stop("Proposed VARIOUS rows to eliminate contain 1s!")
+    print("x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x-x")
+  } else {
+    dsheet.categ.mat.new <- dsheet.categ.mat.new[-skip.idxs2,]
+  }
+
+  return(dsheet.categ.mat.new)
+
 }
