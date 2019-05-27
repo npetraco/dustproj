@@ -18,9 +18,12 @@ which(tolower(gsub(" ", "", rawd[,1], fixed = TRUE)) == "feathers") # Starts the
 
 which(tolower(gsub(" ", "", rawd[,1], fixed = TRUE)) == "feathers()") # Starts the Various category in Original_datasheet
 
-extract.old.datasheet.notes("inst/Original_datasheet.xlsx",      study.name = "Original",      print.level=1)
-extract.old.datasheet.notes("inst/FloridaPhase1_datasheet.xlsx", study.name = "FloridaPhase1", print.level=1)
-extract.old.datasheet.notes("inst/FloridaPhase2_datasheet.xlsx", study.name = "FloridaPhase2", print.level=1)
+j1  <- extract.old.datasheet.notes("inst/Original_datasheet.xlsx",      study.name = "Original",      print.level=0)
+j1a <- read.dust.file(fpath = "inst/Original_datasheet.xlsx")
+length(j1)
+dim(j1a[[2]])
+extract.old.datasheet.notes("inst/FloridaPhase1_datasheet.xlsx", study.name = "FloridaPhase1", print.level=0)
+extract.old.datasheet.notes("inst/FloridaPhase2_datasheet.xlsx", study.name = "FloridaPhase2", print.level=0)
 extract.old.datasheet.notes("inst/WTCk_datasheet.xlsx",          study.name = "WTCk",          print.level=1)
 extract.old.datasheet.notes("inst/WTCq_datasheet.xlsx",          study.name = "WTCq",          print.level=1)
 
