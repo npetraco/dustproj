@@ -31,6 +31,7 @@ convert.datasheet2<-function(fpath.datasheet, study.name, fpath.convertion.table
 
   #Remove all capitalization and spaces
   for(i in 1:nrow(dsheet.categ.mat)){
+    # Remove spaces, stray characters and set to lower case
     clean.drow <- sapply(1:ncol(dsheet.categ.mat), function(xx){gsub(" ", "", tolower(dsheet.categ.mat[i,xx]), fixed = TRUE)})
     clean.drow <- sapply(1:ncol(dsheet.categ.mat), function(xx){gsub("“", "", clean.drow[xx], fixed = TRUE)})
     dsheet.categ.mat[i,] <- clean.drow
@@ -59,44 +60,60 @@ convert.datasheet2<-function(fpath.datasheet, study.name, fpath.convertion.table
   ref.cl.scl.idx <- which(conversion.tabl[2,]=="NEW") # Column index for NEW reference class and subclass names in a study
   ref.cl.scl     <- conversion.tabl[,ref.cl.scl.idx]
   ref.cl.scl     <- as.character(ref.cl.scl)
-  ref.cl.scl     <- clean.chars(ref.cl.scl, " ")         # Set to lowercase and get rid of spaces
-  print(ref.cl.scl)
+  ref.cl.scl     <- clean.chars(ref.cl.scl, " ")      # Set to lowercase and get rid of spaces
+  #print(ref.cl.scl)
 
-  # cl.namechgs.col.idx <- which(conversion.tabl[1,]=="Class Changes") # Column index for stipulated class name changes
-  # cl.namechgs         <- conversion.tabl[,cl.namechgs.col.idx]     # Drop the first row because of the format of conversion.tbl
-  #
-  # scl.namechgs.col.idx <- which(conversion.tabl[1,]=="Subclass Changes") # Column index for stipulated subclass name changes
-  # scl.namechgs         <- conversion.tabl[,scl.namechgs.col.idx]       # Drop the first row because of the format of conversion.tbl
-  #
-  # study2ref.cl.scl <- cbind(ref.cl.scl, study.cl.scl, cl.namechgs, scl.namechgs) # Class/Subclass name conversions collected together
-  #
-  # # Study Reference attributes from conversion table
-  # attribs.idx        <- which(conversion.tabl[1,]=="Attributes")           # Column index where the attribute infor begins
-  # study.attribs.idxs <- which(conversion.tabl[,attribs.idx] == study.name) # Row numbers for the study's recorded attribute names
-  # study.attribs      <- as.character(as.matrix(conversion.tabl[study.attribs.idxs,(attribs.idx+1):ncol(conversion.tabl)]))
-  #
-  # # NEW Reference attributes from conversion table
-  # ref.attribs.idxs <- which(conversion.tabl[,attribs.idx] == "NEW") # Row numbers for the Reference attribute names
-  # ref.attribs      <- as.character(as.matrix(conversion.tabl[ref.attribs.idxs,(attribs.idx+1):ncol(conversion.tabl)]))
-  #
-  # if(length(ref.attribs) != length(study.attribs)){
-  #   stop("Length of NEW attributs not the same as length of specified study attributes. Check for stray spaces or other problems.")
-  # }
-  # study2ref.attribs <- cbind(ref.attribs,study.attribs)
-  #
-  # # Look up idx of unq in stdy stdy col. use that idx to look up ref name in stdy ref col
-  # # Convert class names:
-  # for(i in 1:length(unique.classes)){
-  #   dsheet.cl.idxs <- which(dsheet.categ.mat[,1] == unique.classes[i])
-  #   # Many Glass/Mineral Grains cells should now be classed as Various! The class name will be
-  #   # changed however in the subclass loop. ** NOTE: ** For now they will be labeled as Inorganic Grains.
-  #   cl.chg.idx <- which(study2ref.cl.scl[,2] == unique.classes[i])
-  #   #print(unique.classes[i])
-  #   #print(cl.chg.idx)
-  #   #print(study2ref.cl.scl[,2])
-  #   dsheet.categ.mat.new[dsheet.cl.idxs,1] <- as.character(as.matrix(study2ref.cl.scl[cl.chg.idx,1]))
-  # }
-  #
+  cl.namechgs.col.idx <- which(conversion.tabl[1,]=="Class Changes") # Column index for stipulated class name changes
+  cl.namechgs         <- conversion.tabl[,cl.namechgs.col.idx]       # Drop the first row because of the format of conversion.tbl
+  cl.namechgs         <- as.character(cl.namechgs)
+  cl.namechgs         <- clean.chars(cl.namechgs, " ")               # Set to lowercase and get rid of spaces
+  #print(cl.namechgs)
+
+  scl.namechgs.col.idx <- which(conversion.tabl[1,]=="Subclass Changes") # Column index for stipulated subclass name changes
+  scl.namechgs         <- conversion.tabl[,scl.namechgs.col.idx]         # Drop the first row because of the format of conversion.tbl
+  scl.namechgs         <- as.character(scl.namechgs)
+  scl.namechgs         <- clean.chars(scl.namechgs, " ")                 # Set to lowercase and get rid of spaces
+  #print(scl.namechgs)
+
+  study2ref.cl.scl <- cbind(ref.cl.scl, study.cl.scl, cl.namechgs, scl.namechgs) # Class/Subclass name conversions collected together
+  #print(study2ref.cl.scl)
+
+  # Study Reference attributes from conversion table
+  attribs.idx        <- which(conversion.tabl[1,]=="Attributes")           # Column index where the attribute infor begins
+  study.attribs.idxs <- which(conversion.tabl[,attribs.idx] == study.name) # Row numbers for the study's recorded attribute names
+  study.attribs      <- as.character(as.matrix(conversion.tabl[study.attribs.idxs,(attribs.idx+1):ncol(conversion.tabl)]))
+  study.attribs      <- clean.chars(study.attribs, " ")                    # Set to lowercase and get rid of spaces
+  #print(study.attribs)
+  #print(study.name)
+
+  # NEW Reference attributes from conversion table
+  ref.attribs.idxs <- which(conversion.tabl[,attribs.idx] == "NEW") # Row numbers for the Reference attribute names
+  ref.attribs      <- as.character(as.matrix(conversion.tabl[ref.attribs.idxs,(attribs.idx+1):ncol(conversion.tabl)]))
+  ref.attribs      <- clean.chars(ref.attribs, " ")
+  #print(ref.attribs)
+
+  if(length(ref.attribs) != length(study.attribs)){
+    stop("Length of NEW attributs not the same as length of specified study attributes. Check for stray spaces or other problems.")
+  }
+  study2ref.attribs <- cbind(ref.attribs,study.attribs)
+  #print(study2ref.attribs)
+  #print(study.name)
+
+
+  # Look up idx of unq in stdy stdy col. use that idx to look up ref name in stdy ref col
+  # Convert class names:
+  for(i in 1:length(unique.classes)){
+    dsheet.cl.idxs <- which(dsheet.categ.mat[,1] == unique.classes[i])
+    # Many Glass/Mineral Grains cells should now be classed as Various! The class name will be
+    # changed however in the subclass loop. ** NOTE: ** For now they will be labeled as Inorganic Grains.
+    cl.chg.idx <- which(study2ref.cl.scl[,2] == unique.classes[i])
+    #print(unique.classes[i])
+    #print(cl.chg.idx)
+    #print(study2ref.cl.scl[,2])
+    dsheet.categ.mat.new[dsheet.cl.idxs,1] <- as.character(as.matrix(study2ref.cl.scl[cl.chg.idx,1]))
+  }
+  print(dsheet.categ.mat.new)
+
   # # Convert subclass names, AND make any stipulated class name adjustments
   # for(i in 1:length(unique.subclasses)){
   #
