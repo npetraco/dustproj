@@ -71,6 +71,9 @@ convert.datasheet<-function(fpath.datasheet, study.name, fpath.convertion.table,
     # Many Glass/Mineral Grains cells should now be classed as Various! The class name will be
     # changed however in the subclass loop. ** NOTE: ** For now they will be labeled as Inorganic Grains.
     cl.chg.idx <- which(study2ref.cl.scl[,2] == unique.classes[i])
+    #print(unique.classes[i])
+    #print(cl.chg.idx)
+    #print(study2ref.cl.scl[,2])
     dsheet.categ.mat.new[dsheet.cl.idxs,1] <- as.character(as.matrix(study2ref.cl.scl[cl.chg.idx,1]))
   }
 
