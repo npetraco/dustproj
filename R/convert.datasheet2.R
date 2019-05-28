@@ -112,122 +112,122 @@ convert.datasheet2<-function(fpath.datasheet, study.name, fpath.convertion.table
     #print(study2ref.cl.scl[,2])
     dsheet.categ.mat.new[dsheet.cl.idxs,1] <- as.character(as.matrix(study2ref.cl.scl[cl.chg.idx,1]))
   }
-  print(dsheet.categ.mat.new)
+  #print(dsheet.categ.mat.new)
 
-  # # Convert subclass names, AND make any stipulated class name adjustments
-  # for(i in 1:length(unique.subclasses)){
-  #
-  #   dsheet.scl.idxs <- which(dsheet.categ.mat[,2] == unique.subclasses[i])
-  #   scl.chg.idx     <- which(study2ref.cl.scl[,2] == unique.subclasses[i])
-  #
-  #   # If spotted an issue with the loaded datasheet subclass name. Diagnose:
-  #   if(length(scl.chg.idx) != 1){
-  #
-  #     if(print.level>=1){
-  #       print("Issue with old datasheet at: *****************************")
-  #       print(paste0("===== ", unique.subclasses[i]," ====="))
-  #       print(paste0("The above subclass name occurs: ", length(scl.chg.idx)," times."))
-  #     }
-  #
-  #     if(length(scl.chg.idx)==0){
-  #
-  #       # So we didn't find the subclass name in the reference study subclass names.
-  #       # Look and see if it's in the reference new subclass names:
-  #       poss.ref.scl.mch.idx <- which(study2ref.cl.scl[,1] == unique.subclasses[i])
-  #       if(length(poss.ref.scl.mch.idx) == 1) {
-  #
-  #         if(print.level>=1){
-  #           # Found the subclass name in the reference study subclass names:
-  #           cat("Subclass name:", unique.subclasses[i], "is not in the reference study subclass names.\nIt is in the new datasheet reference subclass names, so we'll use this name.\n\n" )
-  #         } else {
-  #           condl.trash <- NULL # Just to have something to do if we don't print at this level
-  #         }
-  #
-  #       } else {
-  #
-  #         # Probably best to thow an error if we run across a subclass we don't recognize in the reference datasheets:
-  #         stop("Can't find the above subclass name in study2ref.cl.scl[,2]. Open up the old datasheet and see what's going on...")
-  #
-  #       }
-  #     } else {
-  #
-  #       # Handel subclass names we will toss:
-  #       for(j in 1:length(scl.chg.idx)) {
-  #
-  #         skipQ <- unique(study2ref.cl.scl[scl.chg.idx,1])
-  #
-  #         if(length(skipQ) != 1) {
-  #           print(paste("xxxxxxx",study2ref.cl.scl[scl.chg.idx,1], "xxxxxxxx"))
-  #           stop("Problem! These should be uniquely SKIP!")
-  #         } else {
-  #           if(toupper(skipQ) != "SKIP") {
-  #             stop("Problem! This should be SKIP! Check the old datasheet!")
-  #           } else {
-  #             # ******************Skip this subclass category name
-  #             if(print.level >=1) {
-  #               print(paste("Skipping subclass name:", unique.subclasses[i], "--->", skipQ))
-  #             }
-  #             dsheet.categ.mat.new[dsheet.scl.idxs,2] <- as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,1]))
-  #             # No need to change the class names for these since these will be tossed.
-  #           }
-  #         }
-  #       }
-  #     }
-  #   } else {
-  #     # ****************Do the name conversion
-  #     # Look first for the subclassname change in the NEW column.
-  #     # If not found look in the Subclass Change column:
-  #     if(is.na(study2ref.cl.scl[scl.chg.idx,1])){
-  #       new.scl.nme <- as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,4]))
-  #       old.scl.nme <- as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,2]))
-  #
-  #       if(print.level >= 2) {
-  #         print(paste("Subclass name change from:", old.scl.nme, "to", new.scl.nme))
-  #       }
-  #
-  #       dsheet.categ.mat.new[dsheet.scl.idxs,2] <- new.scl.nme
-  #
-  #       # Check if there is a class name change too:
-  #       if(!is.na(study2ref.cl.scl[scl.chg.idx,3])) {
-  #         old.cl.nme <- dsheet.categ.mat.new[dsheet.scl.idxs,1][1] # Just grab the first occurance.
-  #         new.cl.nme <- as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,3]))
-  #         dsheet.categ.mat.new[dsheet.scl.idxs,1] <- new.cl.nme
-  #
-  #         if(print.level >= 2){
-  #           print(paste("Class name change from:", old.cl.nme, "to", new.cl.nme))
-  #         }
-  #
-  #       }
-  #
-  #     } else {
-  #       dsheet.categ.mat.new[dsheet.scl.idxs,2] <- as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,1]))
-  #
-  #       # Check for a class name change in the Class Change column:
-  #       if(!is.na(study2ref.cl.scl[scl.chg.idx,3])) {
-  #         old.cl.nme <- dsheet.categ.mat.new[dsheet.scl.idxs,1][1] # Just grab the first occurance.
-  #         new.cl.nme <- as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,3]))
-  #         dsheet.categ.mat.new[dsheet.scl.idxs,1] <- new.cl.nme
-  #
-  #         if(print.level >= 2){
-  #           print(paste("Class name change from:", old.cl.nme, "to", new.cl.nme))
-  #         }
-  #
-  #       }
-  #       # Check for a an extra subclass name change in the Subclass Change column:
-  #       if(!is.na(study2ref.cl.scl[scl.chg.idx,4])) {
-  #         old.scl.nme <- dsheet.categ.mat.new[dsheet.scl.idxs,2]
-  #         new.scl.nme <- as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,4]))
-  #         dsheet.categ.mat.new[dsheet.scl.idxs,2] <- new.scl.nme
-  #
-  #         if(print.level >= 2){
-  #           print(paste("Subclass name change from:", old.scl.nme, "to", new.scl.nme))
-  #         }
-  #
-  #       }
-  #     }
-  #
-  #   }
-  # }
+  # Convert subclass names, AND make any stipulated class name adjustments
+  for(i in 1:length(unique.subclasses)){
+
+    dsheet.scl.idxs <- which(dsheet.categ.mat[,2] == unique.subclasses[i])
+    scl.chg.idx     <- which(study2ref.cl.scl[,2] == unique.subclasses[i])
+
+    # If spotted an issue with the loaded datasheet subclass name. Diagnose:
+    if(length(scl.chg.idx) != 1){
+
+      if(print.level>=1){
+        print("Issue with old datasheet at: *****************************")
+        print(paste0("===== ", unique.subclasses[i]," ====="))
+        print(paste0("The above subclass name occurs: ", length(scl.chg.idx)," times."))
+      }
+
+      if(length(scl.chg.idx)==0){
+
+        # So we didn't find the subclass name in the reference study subclass names.
+        # Look and see if it's in the reference new subclass names:
+        poss.ref.scl.mch.idx <- which(study2ref.cl.scl[,1] == unique.subclasses[i])
+        if(length(poss.ref.scl.mch.idx) == 1) {
+
+          if(print.level>=1){
+            # Found the subclass name in the reference study subclass names:
+            cat("Subclass name:", unique.subclasses[i], "is not in the reference study subclass names.\nIt is in the new datasheet reference subclass names, so we'll use this name.\n\n" )
+          } else {
+            condl.trash <- NULL # Just to have something to do if we don't print at this level
+          }
+
+        } else {
+
+          # Probably best to thow an error if we run across a subclass we don't recognize in the reference datasheets:
+          stop("Can't find the above subclass name in study2ref.cl.scl[,2]. Open up the old datasheet and see what's going on...")
+
+        }
+      } else {
+
+        # Handel subclass names we will toss:
+        for(j in 1:length(scl.chg.idx)) {
+
+          skipQ <- unique(study2ref.cl.scl[scl.chg.idx,1])
+
+          if(length(skipQ) != 1) {
+            print(paste("xxxxxxx",study2ref.cl.scl[scl.chg.idx,1], "xxxxxxxx"))
+            stop("Problem! These should be uniquely SKIP!")
+          } else {
+            if(toupper(skipQ) != "SKIP") {
+              stop("Problem! This should be SKIP! Check the old datasheet!")
+            } else {
+              # ******************Skip this subclass category name
+              if(print.level >=1) {
+                print(paste("Skipping subclass name:", unique.subclasses[i], "--->", skipQ))
+              }
+              dsheet.categ.mat.new[dsheet.scl.idxs,2] <- as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,1]))
+              # No need to change the class names for these since these will be tossed.
+            }
+          }
+        }
+      }
+    } else {
+      # ****************Do the name conversion
+      # Look first for the subclassname change in the NEW column.
+      # If not found look in the Subclass Change column:
+      if(is.na(study2ref.cl.scl[scl.chg.idx,1])){
+        new.scl.nme <- as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,4]))
+        old.scl.nme <- as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,2]))
+
+        if(print.level >= 2) {
+          print(paste("Subclass name change from:", old.scl.nme, "to", new.scl.nme))
+        }
+
+        dsheet.categ.mat.new[dsheet.scl.idxs,2] <- new.scl.nme
+
+        # Check if there is a class name change too:
+        if(!is.na(study2ref.cl.scl[scl.chg.idx,3])) {
+          old.cl.nme <- dsheet.categ.mat.new[dsheet.scl.idxs,1][1] # Just grab the first occurance.
+          new.cl.nme <- as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,3]))
+          dsheet.categ.mat.new[dsheet.scl.idxs,1] <- new.cl.nme
+
+          if(print.level >= 2){
+            print(paste("Class name change from:", old.cl.nme, "to", new.cl.nme))
+          }
+
+        }
+
+      } else {
+        dsheet.categ.mat.new[dsheet.scl.idxs,2] <- as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,1]))
+
+        # Check for a class name change in the Class Change column:
+        if(!is.na(study2ref.cl.scl[scl.chg.idx,3])) {
+          old.cl.nme <- dsheet.categ.mat.new[dsheet.scl.idxs,1][1] # Just grab the first occurance.
+          new.cl.nme <- as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,3]))
+          dsheet.categ.mat.new[dsheet.scl.idxs,1] <- new.cl.nme
+
+          if(print.level >= 2){
+            print(paste("Class name change from:", old.cl.nme, "to", new.cl.nme))
+          }
+
+        }
+        # Check for a an extra subclass name change in the Subclass Change column:
+        if(!is.na(study2ref.cl.scl[scl.chg.idx,4])) {
+          old.scl.nme <- dsheet.categ.mat.new[dsheet.scl.idxs,2]
+          new.scl.nme <- as.character(as.matrix(study2ref.cl.scl[scl.chg.idx,4]))
+          dsheet.categ.mat.new[dsheet.scl.idxs,2] <- new.scl.nme
+
+          if(print.level >= 2){
+            print(paste("Subclass name change from:", old.scl.nme, "to", new.scl.nme))
+          }
+
+        }
+      }
+
+    }
+  }
   #
   # for(i in 1:length(unique.attributes)){
   #
