@@ -55,6 +55,7 @@ convert.datasheet2<-function(fpath.datasheet, study.name, fpath.convertion.table
   study.cl.scl <- conversion.tabl[,cl.scl.idx]
   study.cl.scl <- as.character(study.cl.scl)
   study.cl.scl <- clean.chars(study.cl.scl, " ")         # Set to lowercase and get rid of spaces
+  study.cl.scl <- clean.chars(study.cl.scl, "“")         # Get rid of any wierd continuation quotes too
   #print(study.cl.scl)
 
   ref.cl.scl.idx <- which(conversion.tabl[2,]=="NEW") # Column index for NEW reference class and subclass names in a study
@@ -144,23 +145,32 @@ convert.datasheet2<-function(fpath.datasheet, study.name, fpath.convertion.table
           }
 
         } else {
-
+          #print(study2ref.cl.scl[,2])
+          #print(study2ref.cl.scl[,1])
+          #print(unique.subclasses[i])
           # Probably best to thow an error if we run across a subclass we don't recognize in the reference datasheets:
           stop("Can't find the above subclass name in study2ref.cl.scl[,2]. Open up the old datasheet and see what's going on...")
 
         }
       } else {
+#
+        print(study2ref.cl.scl)
 
         # Handel subclass names we will toss:
         for(j in 1:length(scl.chg.idx)) {
 
           skipQ <- unique(study2ref.cl.scl[scl.chg.idx,1])
-
+          print(study2ref.cl.scl[scl.chg.idx,1])
+#
           if(length(skipQ) != 1) {
             print(paste("xxxxxxx",study2ref.cl.scl[scl.chg.idx,1], "xxxxxxxx"))
             stop("Problem! These should be uniquely SKIP!")
           } else {
             if(toupper(skipQ) != "SKIP") {
+
+              print(toupper(skipQ))
+              print(unique.subclasses[i])
+#
               stop("Problem! This should be SKIP! Check the old datasheet!")
             } else {
               # ******************Skip this subclass category name
