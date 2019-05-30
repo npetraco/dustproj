@@ -15,13 +15,22 @@ gsub("“", "", c("rugnylon“", "rugpolyester“", "olefinanyx-s", "nylon“", 
 
 
 junk <- parse.study.datasheet.expt("inst/Original_datasheet.xlsx", study.name = "Original")
+junk <- parse.study.datasheet.expt("inst/FloridaPhase1_datasheet.xlsx", study.name = "FloridaPhase1")
+junk <- parse.study.datasheet.expt("inst/FloridaPhase2_datasheet2_mod.xlsx", study.name = "FloridaPhase2")
+junk <- parse.study.datasheet.expt("inst/WTCk_datasheet.xlsx", study.name = "WTCk")
+junk <- parse.study.datasheet.expt("inst/WTCq_datasheet.xlsx", study.name = "WTCq")
 head(junk$study.flattened.datasheet)
+junk$study.flattened.datasheet
 
 
-junk2 <- parse.conversion.table.expt("inst/category_conversion_tables2a.xlsx", study.name = "Original")
+junk2 <- parse.conversion.table.expt("inst/category_conversion_tables2b.xlsx", study.name = "Original")
+junk2$cl.scl.conversions
+junk2$attribs.conversions
 dim(junk2$cl.scl.conversions)
 dim(junk2$attribs.conversions)
 junk2$attribs.conversions
+
+junk2$cl.scl.conversions
 
 jkrow <- 287
 junk$study.flattened.datasheet[jkrow,]

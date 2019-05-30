@@ -110,7 +110,7 @@ parse.conversion.table.expt<-function(fpath.convertion.table, study.name){
   #print(study2ref.cl.scl)
 
   # Study Reference attributes from conversion table
-  attribs.idx        <- which(conversion.tabl[1,]=="Attributes")           # Column index where the attribute infor begins
+  attribs.idx        <- which(conversion.tabl[1,]=="Attributes")           # Column index where the attribute information begins
   study.attribs.idxs <- which(conversion.tabl[,attribs.idx] == study.name) # Row numbers for the study's recorded attribute names
   study.attribs      <- as.character(as.matrix(conversion.tabl[study.attribs.idxs,(attribs.idx+1):ncol(conversion.tabl)]))
   study.attribs      <- clean.chars(study.attribs, " ")                    # Set to lowercase and get rid of spaces
@@ -137,7 +137,7 @@ parse.conversion.table.expt<-function(fpath.convertion.table, study.name){
   ref.class.of.attribs      <- as.character(conversion.tabl[ref.class.of.attribs.idxs,2]) # Class names for the attributes
   ref.class.of.attribs      <- clean.chars(ref.class.of.attribs, " ")
   #rep.leng <- length((attribs.idx+1):ncol(conversion.tabl))
-  ref.class.of.attribs[which(ref.class.of.attribs == "feathers")] <- "various" # A workaround so I don't have to change conversion sheet.
+  #ref.class.of.attribs[which(ref.class.of.attribs == "feathers")] <- "various" # A workaround so I don't have to change conversion sheet.
   ref.attribute.class.col <- as.vector(sapply(1:length(ref.class.of.attribs), function(xx){rep(ref.class.of.attribs[xx], rep.leng)}))
   ref.attribs <- cbind(ref.attribute.class.col, ref.attribs)
   colnames(ref.attribs) <- c("ref.class.of.attribute","ref.attribute")
@@ -162,6 +162,109 @@ parse.conversion.table.expt<-function(fpath.convertion.table, study.name){
   )
 
   return(study2ref.conversion.info)
+
+}
+
+
+#' Parse conversion sheet according to the study to be converted
+#'
+#' The function will XXXX
+#'
+#' @param XX The XX
+#' @return The function will XX
+#'
+#'
+#' @export
+parse.conversion.table.expt2<-function(fpath.convertion.table, study.name){
+
+  # Study dependendent classes, subclasses and attributes from conversion table
+  #conversion.tabl <- read_excel(path = fpath.convertion.table, col_names=F)
+  conversion.tabl <- read.xlsx(fpath.convertion.table, 1, header = FALSE)
+
+  cl.scl.idx   <- which(conversion.tabl[2,]==study.name) # Column index for class and subclass names in a study
+  study.cl.scl <- conversion.tabl[,cl.scl.idx]
+  study.cl.scl <- as.character(study.cl.scl)
+  study.cl.scl <- clean.chars(study.cl.scl, " ")         # Set to lowercase and get rid of spaces
+  study.cl.scl <- clean.chars(study.cl.scl, "“")         # Get rid of any wierd continuation quotes too
+  #print(study.cl.scl)
+
+  ref.cl.scl.idx <- which(conversion.tabl[2,]=="NEW") # Column index for NEW reference class and subclass names in a study
+  ref.cl.scl     <- conversion.tabl[,ref.cl.scl.idx]
+  ref.cl.scl     <- as.character(ref.cl.scl)
+  ref.cl.scl     <- clean.chars(ref.cl.scl, " ")      # Set to lowercase and get rid of spaces
+  #print(ref.cl.scl)
+
+  cl.namechgs.col.idx <- which(conversion.tabl[1,]=="Class Changes") # Column index for stipulated class name changes
+  cl.namechgs         <- conversion.tabl[,cl.namechgs.col.idx]       # Drop the first row because of the format of conversion.tbl
+  cl.namechgs         <- as.character(cl.namechgs)
+  cl.namechgs         <- clean.chars(cl.namechgs, " ")               # Set to lowercase and get rid of spaces
+  #print(cl.namechgs)
+
+  scl.namechgs.col.idx <- which(conversion.tabl[1,]=="Subclass Changes") # Column index for stipulated subclass name changes
+  scl.namechgs         <- conversion.tabl[,scl.namechgs.col.idx]         # Drop the first row because of the format of conversion.tbl
+  scl.namechgs         <- as.character(scl.namechgs)
+  scl.namechgs         <- clean.chars(scl.namechgs, " ")                 # Set to lowercase and get rid of spaces
+  #print(scl.namechgs)
+
+  study2ref.cl.scl <- cbind(ref.cl.scl, study.cl.scl, cl.namechgs, scl.namechgs) # Class/Subclass name conversions collected together
+  #print(study2ref.cl.scl)
+
+  # Study Reference attributes from conversion table
+  attribs.idx        <- which(conversion.tabl[1,]=="Attributes")           # Column index where the attribute information begins
+  study.attribs.idxs <- which(conversion.tabl[,attribs.idx] == study.name) # Row numbers for the study's recorded attribute names
+  #Lets do this as a loop instead.
+  print(study.attribs.idxs)
+
+  # study.attribs      <- as.character(as.matrix(conversion.tabl[study.attribs.idxs,(attribs.idx+1):ncol(conversion.tabl)]))
+  # study.attribs      <- clean.chars(study.attribs, " ")                    # Set to lowercase and get rid of spaces
+  # #print(study.attribs.idxs)
+  # #
+  # study.class.of.attribs.idxs <- which(conversion.tabl[,attribs.idx] == "NEW")
+  # study.class.of.attribs      <- as.character(conversion.tabl[study.class.of.attribs.idxs,2]) # Class names for the attributes
+  # study.class.of.attribs      <- clean.chars(study.class.of.attribs, " ")
+  # rep.leng <- length((attribs.idx+1):ncol(conversion.tabl))
+  # study.attribute.class.col <- as.vector(sapply(1:length(study.class.of.attribs), function(xx){rep(study.class.of.attribs[xx],rep.leng)}))
+  # study.attribs <- cbind(study.attribute.class.col, study.attribs)
+  # colnames(study.attribs) <- c("study.class.of.attribute","study.attribute")
+  #
+  #print(study.class.of.attribs)
+  #print(study.name)
+
+  # # NEW Reference attributes from conversion table
+  # ref.attribs.idxs <- which(conversion.tabl[,attribs.idx] == "NEW") # Row numbers for the Reference attribute names
+  # ref.attribs      <- as.character(as.matrix(conversion.tabl[ref.attribs.idxs,(attribs.idx+1):ncol(conversion.tabl)]))
+  # ref.attribs      <- clean.chars(ref.attribs, " ")
+  #
+  # #ref.class.of.attribs.idxs <- which(conversion.tabl[,attribs.idx] == "NEW")
+  # ref.class.of.attribs.idxs <- ref.attribs.idxs
+  # ref.class.of.attribs      <- as.character(conversion.tabl[ref.class.of.attribs.idxs,2]) # Class names for the attributes
+  # ref.class.of.attribs      <- clean.chars(ref.class.of.attribs, " ")
+  # #rep.leng <- length((attribs.idx+1):ncol(conversion.tabl))
+  # #ref.class.of.attribs[which(ref.class.of.attribs == "feathers")] <- "various" # A workaround so I don't have to change conversion sheet.
+  # ref.attribute.class.col <- as.vector(sapply(1:length(ref.class.of.attribs), function(xx){rep(ref.class.of.attribs[xx], rep.leng)}))
+  # ref.attribs <- cbind(ref.attribute.class.col, ref.attribs)
+  # colnames(ref.attribs) <- c("ref.class.of.attribute","ref.attribute")
+  #
+  # #print(ref.attribs)
+  #
+  # if(nrow(ref.attribs) != nrow(study.attribs)){
+  #   stop("Length of NEW attributs not the same as length of specified study attributes. Check for stray spaces or other problems.")
+  # }
+  # study2ref.attribs <- cbind(ref.attribs,study.attribs)
+  # #print(study2ref.attribs)
+  # #print(study.name)
+  #
+  # study2ref.conversion.info <- list(
+  #   study2ref.cl.scl,
+  #   study2ref.attribs
+  # )
+  #
+  # names(study2ref.conversion.info) <- c(
+  #   "cl.scl.conversions",
+  #   "attribs.conversions"
+  # )
+  #
+  # return(study2ref.conversion.info)
 
 }
 
