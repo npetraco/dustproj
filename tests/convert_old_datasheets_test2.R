@@ -23,7 +23,7 @@ head(junk$study.flattened.datasheet)
 junk$study.flattened.datasheet
 
 
-junk2 <- parse.conversion.table.expt("inst/category_conversion_tables2b.xlsx", study.name = "Original")
+junk2 <- parse.conversion.table.expt2("inst/category_conversion_tables2b.xlsx", study.name = "Original")
 junk2$cl.scl.conversions
 junk2$attribs.conversions
 dim(junk2$cl.scl.conversions)
