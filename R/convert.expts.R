@@ -284,6 +284,47 @@ parse.conversion.table.expt2<-function(fpath.convertion.table, study.name){
 }
 
 
+#' Convert a row of a read in (flattened) study to the reference class,subclass and attribute
+#'
+#' The function will XXXX
+#'
+#' @param XX The XX
+#' @return The function will XX
+#'
+#'
+#' @export
+convert.study.row.expt<-function(study.row, conversion.info){
+
+  #print(study.row)
+  study.class    <- study.row[1]
+  study.subclass <- study.row[2]
+  study.attrib   <- study.row[3]
+
+  # Get reference class name corresponding to study class name
+  class.row.idx <- which(conversion.info$cl.scl.conversions[,2] == study.class)
+  ref.class     <- conversion.info$cl.scl.conversions[class.row.idx,1]
+  #print(ref.class)
+
+  # Get reference subclass name corresponding to study subclass name
+  subclass.row.idx <- which(conversion.info$cl.scl.conversions[,2] == study.subclass)
+  ref.subclass     <- conversion.info$cl.scl.conversions[subclass.row.idx,1]
+  #print(ref.subclass)
+
+  # Get reference attribute name corresponding to study attribute name GIVEN the study class name
+  attrib.class.row.idxs <- which(conversion.info$attribs.conversions[,3] == study.class) # Pick out the rows of the class in the attributes conversion table
+  attribs.of.class      <- conversion.info$attribs.conversions[attrib.class.row.idxs, ]  # Use these to grab the block of class-attribute info
+  attrib.row.idx        <- which(attribs.of.class[,4] == study.attrib)                   # Pluck out the row with the study attribute given the class
+  ref.attrib            <- attribs.of.class[attrib.row.idx, 2]
+  #print(ref.attrib)
+
+  ref.row <- matrix(c(ref.class, ref.subclass, ref.attrib), c(1,3))
+  colnames(ref.row) <- c("class","subclass","attribute")
+
+  return(ref.row)
+
+}
+
+
 #' Expts to chop conversion process into managable and de-buggable pieces
 #'
 #' Bring together conversion sub-routenes

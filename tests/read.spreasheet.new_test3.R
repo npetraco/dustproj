@@ -25,3 +25,35 @@ junk2$cl.scl.conversions
 junk2$attribs.conversions
 dim(junk2$cl.scl.conversions)
 dim(junk2$attribs.conversions)
+
+
+jkrow <- 287
+junk$study.flattened.datasheet[jkrow,]
+
+junk$study.flattened.datasheet[jkrow,1]
+junk2$cl.scl.conversions[,2]
+junk$study.flattened.datasheet[jkrow,1]
+jcl.idx <- which(junk2$cl.scl.conversions[,2] == junk$study.flattened.datasheet[jkrow,1])
+jcl.idx
+junk2$cl.scl.conversions[jcl.idx, 2]
+junk2$cl.scl.conversions[jcl.idx, 1]
+
+
+junk$study.flattened.datasheet[jkrow,2]
+jsc.idx <- which(junk2$cl.scl.conversions[,2] == junk$study.flattened.datasheet[jkrow,2])
+junk2$cl.scl.conversions[jsc.idx, 2]
+junk2$cl.scl.conversions[jsc.idx, 1]
+
+junk$study.flattened.datasheet[jkrow,]
+junk$study.flattened.datasheet[jkrow,3]
+which(junk2$attribs.conversions[,3] == junk$study.flattened.datasheet[jkrow,1])
+
+junk$study.flattened.datasheet[jkrow,1]
+junk2$attribs.conversions[,3] == junk$study.flattened.datasheet[jkrow,1]
+which(junk2$attribs.conversions[,3] == junk$study.flattened.datasheet[jkrow,1])
+junk2$attribs.conversions[which(junk2$attribs.conversions[,3] == junk$study.flattened.datasheet[jkrow,1]), ]
+junk2$attribs.conversions[which(junk2$attribs.conversions[,3] == junk$study.flattened.datasheet[jkrow,1]), 4]
+
+
+jkrow <- 182
+convert.study.row.expt(junk$study.flattened.datasheet[jkrow,], junk2)
