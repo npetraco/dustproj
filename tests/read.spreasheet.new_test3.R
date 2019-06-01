@@ -55,5 +55,27 @@ junk2$attribs.conversions[which(junk2$attribs.conversions[,3] == junk$study.flat
 junk2$attribs.conversions[which(junk2$attribs.conversions[,3] == junk$study.flattened.datasheet[jkrow,1]), 4]
 
 
-jkrow <- 182
+jkrow <- 11
+junk$study.flattened.datasheet[jkrow,]
 convert.study.row.expt(junk$study.flattened.datasheet[jkrow,], junk2)
+
+for(i in 1:nrow(junk$study.flattened.datasheet)) {
+  print(i)
+  print(junk$study.flattened.datasheet[i, ])
+  jkcrow <- convert.study.row.expt(junk$study.flattened.datasheet[i, ], junk2)
+  print(jkcrow)
+}
+
+
+junk3 <- parse.conversion.table.expt3("inst/category_conversion_tables2b.xlsx", study.name = std.nme)
+junk3$class.conversions
+junk3$subclass.conversions
+junk3$attribute.conversions
+
+head(junk3$subclass.conversions)
+junk
+ji <- 534 # glass/mineralgrains
+ji <- 426 # glass/mineralgrains to ref various
+
+junk$study.flattened.datasheet[ji, ]
+convert.study.row.expt2(junk$study.flattened.datasheet[534, ], junk3)
