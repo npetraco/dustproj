@@ -496,7 +496,7 @@ convert.study.row.expt2<-function(study.row, conversion.info){
   # This shouldn't happen, but if the study.subclass is not found, through an error and manually check to see why.
   if(length(subclass.row.idx) == 0) {
     print(paste("Study class:", study.class))
-    print(paste("Study subclass:", study.subclass))
+    print(paste("*Study subclass:", study.subclass))
     stop("Above study.subclass is not found in the conversion table! Check the study datasheet and conversion table to see why. It probably needs to be added to the conversion table.")
   }
 
@@ -554,7 +554,9 @@ convert.study.row.expt2<-function(study.row, conversion.info){
   if(length(attrib.row.idx) == 0) {
     print(paste("Study class:", study.class))
     print(paste("Reference class:", ref.class))
-    print(paste("Study attribute:", study.attrib))
+    print(paste("Study subclass:", study.subclass))
+    print(paste("Reference subclass:", ref.subclass))
+    print(paste("*Study attribute:", study.attrib))
     stop("Above study.attrib is not found in the conversion table! Check the study datasheet and conversion table to see why. It probably needs to be added to the conversion table.")
   }
 

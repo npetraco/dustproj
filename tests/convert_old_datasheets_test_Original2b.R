@@ -27,7 +27,7 @@ for(i in 1:num.of.samples) {
 # Now loop over the file paths and see what breaks:
 fpths
 
-for(i in 30:length(fpths)) {
+for(i in 126:length(fpths)) {
   print(paste(i, fpths[i]))
   test.a.sheet.conversion(datasheet.file.path = fpths[i],
                           study.name = study.name,
@@ -35,7 +35,7 @@ for(i in 30:length(fpths)) {
                           print.lvl=0)
 }
 
-test.a.sheet.conversion(datasheet.file.path = fpth,
+test.a.sheet.conversion(datasheet.file.path = fpths[111],
                         study.name = study.name,
                         conversion.sheet.file.path = "inst/category_conversion_tables3.xlsx",
-                        print.lvl=0)
+                        print.lvl=2)
