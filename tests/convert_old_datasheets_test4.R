@@ -29,6 +29,15 @@ junk
 ji <- 534 # glass/mineralgrains
 ji <- 426 # glass/mineralgrains to ref various
 ji <- 413 # mineral fibers other  should fail
+ji <- 539 # glass/mineralgraind other  should fail
 fakerow <- c("mineralfibers", "yak","is.present?")
+fakerow <- c("glass/mineralgrains", "other","is.present?")
+
 junk$study.flattened.datasheet[ji, ]
-convert.study.row.expt2(junk$study.flattened.datasheet[534, ], junk3)
+convert.study.row.expt2(junk$study.flattened.datasheet[ji, ], junk3)
+
+fakerow
+convert.study.row.expt2(fakerow, junk3)
+
+# test on another random original datasheet and see if the various glass/mineralgrains get labeled as is.present OR by the glass/mineralgrains attributes
+# test also on other studies to see what the attribute labeling comes out as
