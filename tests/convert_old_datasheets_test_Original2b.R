@@ -27,7 +27,7 @@ for(i in 1:num.of.samples) {
 # Now loop over the file paths and see what breaks:
 fpths
 
-for(i in 126:length(fpths)) {
+for(i in 1:length(fpths)) {
   print(paste(i, fpths[i]))
   test.a.sheet.conversion(datasheet.file.path = fpths[i],
                           study.name = study.name,
@@ -35,7 +35,43 @@ for(i in 126:length(fpths)) {
                           print.lvl=0)
 }
 
-test.a.sheet.conversion(datasheet.file.path = fpths[111],
+test.a.sheet.conversion(datasheet.file.path = fpths[136],
                         study.name = study.name,
                         conversion.sheet.file.path = "inst/category_conversion_tables3.xlsx",
                         print.lvl=2)
+
+# Consitent formatting errors in the two classes noted below. Replace the attributes in these classes:
+# rownames(fpths)<- NULL
+# for(i in 1:length(fpths[214:303])){
+#   #print(fpths[214:303])
+#   replace.class.attributes(
+#     in.fpath.datasheet   = fpths[214:303][i],
+#     class.name           = "Natural Fibers",
+#     attributes.row.range = 2:16,
+#     replacement.names    = c("Red", "Blue", "Green", "Orange", "Brown", "Black", "Violet", "Pink", "Yellow", "Colorless", "Gray", "Magenta", "Aqua", "Natural", "Wine"),
+#     out.fpath.datasheet  = fpths[214:303][i])
+#   replace.class.attributes(
+#     in.fpath.datasheet   = fpths[214:303][i],
+#     class.name           = "Animal Hair",
+#     attributes.row.range = 2:16,
+#     replacement.names    = c("White","Brown","Beige","Black","Gray","Red","W/Brn","W/Blk","W/Beige","W/Gray","Banded","Dyed Blue","Dyed Green","Dyed Red","Dyed Aqua"),
+#     out.fpath.datasheet  = fpths[214:303][i])
+# }
+# warnings()
+#
+# fpths[214:303][2]
+# replace.class.attributes(
+#   in.fpath.datasheet   = fpths[214:303][2],
+#   class.name           = "Natural Fibers",
+#   attributes.row.range = 2:16,
+#   replacement.names    = c("Red", "Blue", "Green", "Orange", "Brown", "Black", "Violet", "Pink", "Yellow", "Colorless", "Gray", "Magenta", "Aqua", "Natural", "Wine"),
+#   out.fpath.datasheet  = fpths[214:303][2])
+# replace.class.attributes(
+#   in.fpath.datasheet   = fpths[214:303][2],
+#   class.name           = "Animal Hair",
+#   attributes.row.range = 2:16,
+#   replacement.names    = c("White","Brown","Beige","Black","Gray","Red","W/Brn","W/Blk","W/Beige","W/Gray","Banded","Dyed Blue","Dyed Green","Dyed Red","Dyed Aqua"),
+#   out.fpath.datasheet  = fpths[214:303][2])
+#
+#
+#
