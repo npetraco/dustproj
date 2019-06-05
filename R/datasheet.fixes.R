@@ -80,8 +80,8 @@ replace.class.attributes<-function(in.fpath.datasheet, class.name, attributes.ro
 #' @export
 test.a.sheet.conversion<-function(datasheet.file.path, study.name, conversion.sheet.file.path, print.lvl=0){
 
-  conv.info        <- parse.conversion.table.expt3(conversion.sheet.file.path, study.name = study.name)
-  parsed.dsht.info <- parse.study.datasheet.expt(datasheet.file.path, study.name = study.name)
+  conv.info        <- parse.conversion.table(conversion.sheet.file.path, study.name = study.name)
+  parsed.dsht.info <- parse.study.datasheet(datasheet.file.path, study.name = study.name)
   flat.dsht        <- parsed.dsht.info$study.flattened.datasheet
 
   for(i in 1:nrow(flat.dsht)) {
@@ -90,7 +90,7 @@ test.a.sheet.conversion<-function(datasheet.file.path, study.name, conversion.sh
       print(paste("Row:",i))
     }
 
-    row.new <- convert.study.row.expt2(flat.dsht[i, ], conv.info)
+    row.new <- convert.study.row(flat.dsht[i, ], conv.info)
 
     if(print.lvl>1){
       compre <- cbind(

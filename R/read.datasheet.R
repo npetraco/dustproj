@@ -61,7 +61,7 @@ read.datasheet<-function(fpath, out.format="matrix", printQ=FALSE){
   return(all.proc.info)
 }
 
-#' Read in the generalized, expandable data sheet
+#' Read in a section for the generalized, expandable data sheet
 #'
 #' XXXX
 #'

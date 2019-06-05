@@ -11,7 +11,8 @@
 #' @export
 extract.old.datasheet.notes<-function(fpath.datasheet, study.name, print.level=0){
 
-  dsheet <- read_excel(path = fpath.datasheet, col_names=F)
+  #dsheet <- read_excel(path = fpath.datasheet, col_names=F)
+  dsheet <- read.xlsx(fpath.datasheet,1,header=FALSE)
 
   sect1.head.idx <- which(tolower(gsub(" ", "", dsheet[,1], fixed = TRUE)) == "humanhairnatural")
   sect2.head.idx <- which(tolower(gsub(" ", "", dsheet[,1], fixed = TRUE)) == "humanhairtreated")
@@ -112,7 +113,7 @@ extract.old.datasheet.notes<-function(fpath.datasheet, study.name, print.level=0
     print("======================================")
   }
 
-  # Should column stact the cells:
+  # Should column stack the cells:
   dsheet.notes <- c(dsheet.notes, as.character(sect.mat))
 
   return(dsheet.notes)
