@@ -22,7 +22,7 @@ study2ref.datasheet<-function(study.datasheet.file.path, study.name, study2ref.c
 
   # These will embed the harvested study info in the reference datasheet format
   ref.categ.mat     <- tolower(reference.template.info$category.mat)
-  ref.categ.mat.CAP <- reference.template.info$category.mat           # Includes capitalization. Make more efficient.........
+  #ref.categ.mat.CAP <- reference.template.info$category.mat           # Includes capitalization. Make more efficient.........
   ref.indic.vec     <- reference.template.info$indicator.vec
 
   for(i in 1:nrow(study.conv.dsheet)){
@@ -34,23 +34,40 @@ study2ref.datasheet<-function(study.datasheet.file.path, study.name, study2ref.c
 
     # If the study row is not found, add it.
     if(is.na(ref.categ.mat.idx)) {
-      warning(paste("Study row:", i,
+
+      warning(paste("********* Study row:", i,
                     as.matrix(study.row.categs[1]),
                     as.matrix(study.row.categs[2]),
                     as.matrix(study.row.categs[3]),
-                    "not found. Adding... BUT DOUBLE CHECK!!")) # THINK CARFULLY HOW TO IMPLEMENT THIS
-    } else {
-      print(paste("Study row:", i,
-                  as.matrix(study.row.categs[1]),
-                  as.matrix(study.row.categs[2]),
-                  as.matrix(study.row.categs[3])))
-      print(paste("Ref row:  ", i,
-                  as.matrix(ref.categ.mat.CAP[ref.categ.mat.idx,1]),
-                  as.matrix(ref.categ.mat.CAP[ref.categ.mat.idx,2]),
-                  as.matrix(ref.categ.mat.CAP[ref.categ.mat.idx,3])))  # ADD NOTES TOO????
+                    "not found. Adding... BUT DOUBLE CHECK!! ************")) # THINK CARFULLY HOW TO IMPLEMENT THIS
+
+      # Just tack on the new categories at the bottom for now
+      ref.categ.mat <- rbind(ref.categ.mat, study.row.categs)
+      ref.indic.vec <- c(ref.indic.vec, study.conv.dsheet[i,4])
+
+    } else { # The study row was found, so just add the data into the reference indicator vector
+
+      # print(paste("Study row:", i,
+      #             as.matrix(study.row.categs[1]),
+      #             as.matrix(study.row.categs[2]),
+      #             as.matrix(study.row.categs[3])))
+      # print(paste("Ref row:  ", i,
+      #             as.matrix(ref.categ.mat.CAP[ref.categ.mat.idx,1]),
+      #             as.matrix(ref.categ.mat.CAP[ref.categ.mat.idx,2]),
+      #             as.matrix(ref.categ.mat.CAP[ref.categ.mat.idx,3])))  # ADD NOTES TOO????
+
+      ref.indic.vec[ref.categ.mat.idx] <-  study.conv.dsheet[i,4]
     }
 
   }
 
+  #print(data.frame(ref.categ.mat, ref.indic.vec))
+  ref.note.vec      <- reference.template.info$note.vec
+  ref.embedded.info <- list(
+    ref.indic.vec,
+    ref.note.vec,
+    ref.categ.mat)
+
+  return(ref.embedded.info)
 
 }

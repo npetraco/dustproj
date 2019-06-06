@@ -14,6 +14,7 @@ study.conv.tbl  <- parse.conversion.table(
 junk <- read.datasheet(fpath = "inst/reference_datasheet.xlsx",out.format = "vector")
 junk$category.mat
 junk$indicator.vec
+junk$note.vec
 
 
 study2ref.datasheet(
