@@ -56,7 +56,12 @@ study2ref.datasheet<-function(study.datasheet.file.path, study.name, study2ref.c
       #             as.matrix(ref.categ.mat.CAP[ref.categ.mat.idx,2]),
       #             as.matrix(ref.categ.mat.CAP[ref.categ.mat.idx,3])))  # ADD NOTES TOO????
 
-      ref.indic.vec[ref.categ.mat.idx] <-  study.conv.dsheet[i,4]
+      # ********ADD IF TO SEE IF ELEMENT IS 1. IF ITS NOT, DON"T OVERWRITE WHATEVER IS IN THERE ALREADY??????
+      # Overwriting a 1 with a 1 is fine, but don't overwrite a 1 with a 0
+      if(study.conv.dsheet[i,4] == 1) {
+        ref.indic.vec[ref.categ.mat.idx] <-  study.conv.dsheet[i,4]
+      }
+
     }
 
   }
