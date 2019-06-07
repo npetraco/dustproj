@@ -9,7 +9,7 @@
 #'
 #'
 #' @export
-write.datasheet<-function(datasheet.info, fpath, section.class.order=NULL, printQ=FALSE){
+write.datasheet<-function(datasheet.info, out.fpath, section.class.order=NULL){
 
   indicator.vec <- datasheet.info$indicator.vec
   note.vec      <- datasheet.info$note.vec
@@ -52,8 +52,10 @@ write.datasheet<-function(datasheet.info, fpath, section.class.order=NULL, print
   max.cols <- max(sect.dims[,2])
 
   # Now build the section blocks
+  writeable.datasheet <- NULL # This is what we will write in Excel format
   for(i in 1:length(ref.classes)) {
-    sect.mat.tmp <- array("", c(sect.dims[i,1], max.cols))
+    #sect.mat.tmp <- array("", c(sect.dims[i,1], max.cols))
+    sect.mat.tmp <- array(NA, c(sect.dims[i,1], max.cols))
 
     # Insert column headers (sectionx class attributes add-other):
     row1.nmes.vec <- c(section2class[i,1], section2class[i,2], attribs[[i]], "add-other")
@@ -62,8 +64,6 @@ write.datasheet<-function(datasheet.info, fpath, section.class.order=NULL, print
     # Insert row names (subclasses)
     col2.nmes.vec <- c(subcls[[i]], "add-other")
     sect.mat.tmp[2:nrow(sect.mat.tmp) ,2] <- col2.nmes.vec
-    #print(sect.mat.tmp)
-    #print("=======================================")
 
     # Now lets try to insert the input section data into the section matrix just constructed
     dsheet.sect.row.idxs <- sect.idxs[[i]] # These are the row indices for all the same class
@@ -78,29 +78,43 @@ write.datasheet<-function(datasheet.info, fpath, section.class.order=NULL, print
       indic.resp <- indicator.vec[row.idx]
       # Be a little careful here to check that indicator is 1 or 0 only
       if(indic.resp == 1) {
-        indic.resp <- "1"
+        indic.resp <- 1
       } else if(indic.resp == 0) {
-        indic.resp <- ""
+        #indic.resp <- ""
+        indic.resp <- NA
       } else {
         print(category.mat[row.idx,])
         print(paste("Indicator response:", indic.resp))
-        stop(paste("Problem at row", row.idx, "of input datasheet!"))
+        stop(paste("Problem at row", row.idx, "of input datasheet! Indicator is not 0 or 1!!"))
       }
 
       # If everything seemd to be ok with the above check, put the response into the section matrix:
-      print(paste("Sect row num:", itm.row.idx, "Subclass:", sect.subclass))
-      print(paste("Sect col num:", itm.col.idx, "Attrib  :", sect.attrib))
-      print(paste("Indicator d :", indic.resp))
-      print(paste("Actual indic:", indicator.vec[row.idx]))
-      print(as.vector(category.mat[row.idx,]))
-      print("+++++++++++++++++++++++++++++++++++++++++++++")
 
       # Check to make sure we aren't writing into a cell with something in it. That indicates a problem
       # finding the row and col index of the data item in the section matrix
+      #if(sect.mat.tmp[itm.row.idx,itm.col.idx] != "" ){
+      if(!is.na(sect.mat.tmp[itm.row.idx,itm.col.idx]) ){
+        print(paste("Sect row num           :", itm.row.idx, "Subclass:", sect.subclass))
+        print(paste("Sect col num           :", itm.col.idx, "Attrib  :", sect.attrib))
+        print(paste("Indicator data to write:", indic.resp))
+        print(paste("Actual input indicator :", indicator.vec[row.idx]))
+        print(as.vector(category.mat[row.idx,]))
+        print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+        stop("Something is weird. We are trying to write to a column/row header... See above info. ")
+      } else { # If nothing is word in the cell, write the response value (should be a character 0 or 1)
+        sect.mat.tmp[itm.row.idx,itm.col.idx] <- indic.resp
+      }
+
     }
-    print("=======================================")
+
+    writeable.datasheet <- rbind(writeable.datasheet, sect.mat.tmp)
 
   }
 
+  # Write the result to an excel file
+  write.xlsx(writeable.datasheet, file = out.fpath, col.names = F, row.names = F, showNA = F)
+  print(paste("Wrote:", out.fpath))
+
+  #return(writeable.datasheet)
 
 }

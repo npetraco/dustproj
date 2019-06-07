@@ -123,7 +123,7 @@ process.data.sheet.section<-function(sect.info.dat, out.format="matrix"){
         indic.mat[i,j] <- 0
       } else if(elem == "") {
         warning(paste0("Stray whitespace encountered in: ", sect.cl.name, " ", sect.scl.names[i], " ", sect.attr.names[j]), ". Recording indicator cell element as 0.\n")
-        indic.mat[i,j] <- 0 # empty cell, but stray white space orignially
+        indic.mat[i,j] <- 0 # empty cell, but stray white space orignially. This can happen when we write an excel sheet fro R too.
       } else {
         note.mat[i,j] <- elem.orig # if we get here, cell must be a note
         warning(paste0("Note encountered in: ", sect.cl.name, " ", sect.scl.names[i], " ", sect.attr.names[j]),".\nNOTE: ", elem.orig, "\nRecording indicator cell element as 1.\n")
