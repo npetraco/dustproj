@@ -67,6 +67,7 @@ study2ref.datasheet<-function(study.datasheet.file.path, study.name, study2ref.c
     ref.indic.vec,
     ref.note.vec,
     ref.categ.mat)
+  names(ref.embedded.info) <- c("indicator.vec","note.vec","category.mat")
 
   return(ref.embedded.info)
 
