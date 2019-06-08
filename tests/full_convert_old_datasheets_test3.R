@@ -29,7 +29,7 @@ converted.old.study.datasheet.info <- study2ref.datasheet(
   print.lvl                 = 0)
 
 converted.old.study.datasheet.info$indicator.vec
-converted.old.study.datasheet.info2$note.vec
+converted.old.study.datasheet.info$note.vec
 data.frame(converted.old.study.datasheet.info$category.mat, converted.old.study.datasheet.info$indicator.vec)
 
 write.datasheet(
@@ -61,7 +61,9 @@ re.datasheet.info$note.vec
 
 converted.old.study.datasheet.info$category.mat
 converted.old.study.datasheet.info$indicator.vec
-converted.old.study.datasheet.info2$note.vec
+converted.old.study.datasheet.info$note.vec
 
 # Write check sheet read in to compare a re-written datasheet with a converted datasheet
 # we want to make sure the category names and data responses are the same
+compare.common(re.datasheet.info, converted.old.study.datasheet.info, stop.for.mismatchQ = T, printQ = T)
+
