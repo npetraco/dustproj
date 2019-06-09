@@ -8,7 +8,7 @@ rootd <- "tests/dust_data/old_formats/"
 
 
 study.nme.prev <- ""
-for(i in 81:length(fnmes)){
+for(i in 1:length(fnmes)){
 
   study.nme <- snmes[i]
 
