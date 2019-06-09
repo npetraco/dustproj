@@ -11,6 +11,7 @@ study.nme.prev <- ""
 for(i in 81:length(fnmes)){
 
   study.nme <- snmes[i]
+
   # If study name changes get new conversion table
   if(study.nme != study.nme.prev){
     print(paste(i, study.nme, "*******************************************************************************"))
@@ -19,6 +20,7 @@ for(i in 81:length(fnmes)){
       study.name = study.nme)
   }
   fpth <- paste0(rootd,fnmes[i])
+  print(paste(i, "Started working on:", fpth, "for:", study.nme))
 
   # Load an empty reference datasheet
   empty.ref.datasheet.info <- read.datasheet(fpath = "inst/reference_datasheet.xlsx",out.format = "vector")
@@ -47,9 +49,11 @@ for(i in 81:length(fnmes)){
 
   study.nme.prev <- study.nme
   print(paste(i, "Success:", fpth, "for:", study.nme.prev))
+  print("------------------------")
   assign("last.warning", NULL, envir = baseenv())
 
 }
+warnings()
 
 fnmes[81]
 fnmes[354]

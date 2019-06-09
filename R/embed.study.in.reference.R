@@ -35,7 +35,8 @@ study2ref.datasheet<-function(study.datasheet.file.path, study.name, study2ref.c
     # If the study row is not found, add it.
     if(is.na(ref.categ.mat.idx)) {
 
-      warning(paste("********* Study row:", i,
+      warning(paste("*********In:", study.datasheet.file.path, "for", study.name,
+                    "Study row:", i,
                     as.matrix(study.row.categs[1]),
                     as.matrix(study.row.categs[2]),
                     as.matrix(study.row.categs[3]),
