@@ -42,7 +42,7 @@ study2ref.datasheet<-function(study.datasheet.file.path, study.name, study2ref.c
                     "not found. Adding... BUT DOUBLE CHECK!! ************")) # THINK CARFULLY HOW TO IMPLEMENT THIS
 
       # Just tack on the new categories at the bottom for now
-      ref.categ.mat <- rbind(ref.categ.mat, study.row.categs)
+      ref.categ.mat <- rbind(ref.categ.mat, as.matrix(study.row.categs))
       ref.indic.vec <- c(ref.indic.vec, study.conv.dsheet[i,4])
 
     } else { # The study row was found, so just add the data into the reference indicator vector

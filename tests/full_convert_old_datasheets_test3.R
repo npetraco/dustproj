@@ -3,7 +3,9 @@ library(dustproj)
 options(max.print=1000000)
 
 study.name <- "Original"
-tfp <- "tests/dust_data/old_formats/dust_table_49.1_sfsc-mod.xlsx"
+#tfp <- "tests/dust_data/old_formats/dust_table_49.1_sfsc-mod.xlsx"
+tfp <- paste0(rootd,fnmes[82])
+tfp
 #rootd <- "tests/dust_data/old_formats/"
 #setwd(rootd)
 
