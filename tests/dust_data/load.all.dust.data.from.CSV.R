@@ -15,6 +15,8 @@ lbl.room <- fdat[,4]
 
 all.counts <- colSums(X)
 
+unique(all.categ[,1])
+
 # Counts of all categories, colors indicate the class
 plot(1:length(all.counts), all.counts, typ="h", xlab="Categ. #", ylab="count")
 points(1:length(all.counts), rep(0,length(all.counts)), col=as.factor(all.categ[,1]))
@@ -23,3 +25,4 @@ points(1:length(all.counts), rep(0,length(all.counts)), col=as.factor(all.categ[
 zero.idxs <- which(all.counts==0)
 plot(1:length(all.counts[-zero.idxs]), all.counts[-zero.idxs], typ="h", xlab="Categ. #", ylab="count")
 points(1:length(all.counts[-zero.idxs]), rep(0,length(all.counts[-zero.idxs])), col=as.factor(categs[-zero.idxs,1]))
+
