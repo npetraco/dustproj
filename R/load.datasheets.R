@@ -9,7 +9,7 @@
 #'
 #'
 #' @export
-load.datasheets<-function(dsheet.filepaths){
+load.datasheets<-function(dsheet.filepaths, order.infoQ=TRUE){
 
   # Initalize a master category matrix, indicator matrix and note matrix from the empty reference datasheet:
   empt.ref.dsheet.info <- read.datasheet(fpath = "inst/reference_datasheet.xlsx", out.format = "vector", add.other.rm = F)
@@ -30,7 +30,7 @@ load.datasheets<-function(dsheet.filepaths){
     # Loop over the rows of the loaded datasheet:
     for(j in 1:nrow(dsheet.info$category.mat)) {
 
-      dsheet.categ.vec     <- clean.chars(char.to.rm = " ", char.vec = dsheet.info$category.mat[j,]) # Grab a category row from the file
+      dsheet.categ.vec     <- clean.chars(char.to.rm = " ", char.vec = dsheet.info$category.mat[j,]) # Grab a category row from the file. Set to lowercase and remove any spaces.
       master.categ.row.idx <- get.row.idx(dsheet.categ.vec, master.category.mat)                     # Grab the master index of row
 
       # Examine the category of the (file) datasheet and see if it is currently missing in the master
@@ -72,10 +72,6 @@ load.datasheets<-function(dsheet.filepaths){
 
   }
 
-  #print(data.frame(master.category.mat, cbind(dsheet.info$indicator.vec, master.indicator.mat[,81])))
-
-  # ADD in re-order
-
   master.info <- list(
     master.category.mat,
     master.indicator.mat,
@@ -86,6 +82,10 @@ load.datasheets<-function(dsheet.filepaths){
     "master.indicator.mat",
     "master.note.mat"
   )
+
+  if(order.infoQ == TRUE){
+    master.info <- order.master.info(master.info)
+  }
 
   return(master.info)
 

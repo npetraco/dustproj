@@ -23,3 +23,11 @@ fnmes[79:85]
 
 rowSums(junk$master.indicator.mat)
 plot(1:nrow(junk$master.indicator.mat), rowSums(junk$master.indicator.mat), typ="h")
+
+
+junk2 <- load.datasheets(in.fpths, order.infoQ = T)
+plot(1:nrow(junk2$master.indicator.mat), rowSums(junk2$master.indicator.mat), typ="h")
+
+junk1a <- order.master.info(junk)
+junk1a$master.category.mat
+plot(1:nrow(junk1a$master.indicator.mat), rowSums(junk1a$master.indicator.mat), typ="h")
