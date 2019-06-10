@@ -9,7 +9,7 @@
 #'
 #'
 #' @export
-read.datasheet<-function(fpath, out.format="matrix", printQ=FALSE){
+read.datasheet<-function(fpath, out.format="matrix", add.other.rm=TRUE, printQ=FALSE){
 
   raw.dat     <- read.xlsx(fpath, 1, header = FALSE)
   sect.starts <- which(is.na(raw.dat[,1]) == FALSE)
@@ -56,6 +56,10 @@ read.datasheet<-function(fpath, out.format="matrix", printQ=FALSE){
   } else { # for matrix partitionrd output:
     all.proc.info <- proc.dat.sht
     names(all.proc.info) <- paste0("Section",1:num.sects)
+  }
+
+  if(add.other.rm==TRUE) {
+    all.proc.info <- remove.all.add.other(all.proc.info, out.format = out.format)
   }
 
   return(all.proc.info)
@@ -169,5 +173,56 @@ process.data.sheet.section<-function(sect.info.dat, out.format="matrix"){
   }
 
   return(out.sect.info.list)
+
+}
+
+
+#' Remove add others in expandable data sheet
+#'
+#' Least traumatic to do it this way....
+#'
+#' The function will XXXX
+#'
+#' @param XX The XX
+#' @return The function will XX
+#'
+#'
+#' @export
+remove.all.add.other<-function(dsheet.info, out.format="matrix"){
+
+  dsheet.info.new <- dsheet.info
+
+  if(out.format=="matrix"){
+    for(i in 1:length(dsheet.info)) {
+      # Assumes add-others are at the last row and column, which they should be
+      drp.idxs <- dim(dsheet.info[[i]][[1]])
+
+      dsheet.info.new[[i]][[1]] <- as.matrix(dsheet.info.new[[i]][[1]][-drp.idxs[1], -drp.idxs[2]])
+      dsheet.info.new[[i]][[2]] <- as.matrix(dsheet.info.new[[i]][[2]][-drp.idxs[1], -drp.idxs[2]])
+
+      colnames(dsheet.info.new[[i]][[1]]) <- colnames(dsheet.info[[i]][[1]])[-drp.idxs[2]]
+      rownames(dsheet.info.new[[i]][[1]]) <- rownames(dsheet.info[[i]][[1]])[-drp.idxs[1]]
+      colnames(dsheet.info.new[[i]][[2]]) <- colnames(dsheet.info[[i]][[1]])[-drp.idxs[2]]
+      rownames(dsheet.info.new[[i]][[2]]) <- rownames(dsheet.info[[i]][[1]])[-drp.idxs[1]]
+
+    }
+  } else if(out.format=="vector"){
+
+    drp.idxs <- unique(
+      c(
+        which(tolower(dsheet.info$category.mat[,2]) == "add-other"),
+        which(tolower(dsheet.info$category.mat[,3]) == "add-other")
+      )
+    )
+
+    dsheet.info.new$category.mat  <- dsheet.info.new$category.mat[-drp.idxs,]
+    dsheet.info.new$indicator.vec <- dsheet.info.new$indicator.vec[-drp.idxs]
+    dsheet.info.new$note.vec      <- dsheet.info.new$note.vec[-drp.idxs]
+
+  } else {
+    stop("Choose matrix or vector for out.format!")
+  }
+
+  return(dsheet.info.new)
 
 }
