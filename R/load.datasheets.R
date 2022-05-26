@@ -12,7 +12,10 @@
 load.datasheets<-function(dsheet.filepaths, order.infoQ=TRUE){
 
   # Initalize a master category matrix, indicator matrix and note matrix from the empty reference datasheet:
-  empt.ref.dsheet.info <- read.datasheet(fpath = "inst/reference_datasheet.xlsx", out.format = "vector", add.other.rm = F)
+  #empt.ref.dsheet.info <- read.datasheet(fpath = "inst/reference_datasheet.xlsx", out.format = "vector", add.other.rm = F)
+  empt.ref.dsheet.info <- read.datasheet(fpath        = system.file("reference_datasheet.xlsx", package = "dustproj"),
+                                         out.format   = "vector",
+                                         add.other.rm = F)
 
   master.category.mat  <- tolower(empt.ref.dsheet.info$category.mat) # There are caps, but there should be no spaces.
   p.ini                <- nrow(master.category.mat)                  # initial number of categories (variables, so we call it p)
