@@ -38,3 +38,35 @@ get.row.idx <- function (x, table, nomatch = NA)
   ct <- do.call("paste", c(table[, , drop = FALSE], sep = "\r"))
   match(cx, ct, nomatch = nomatch)
 }
+
+
+#' Pick out groups of observations and form a new X matrix
+#'
+#' XXXX
+#'
+#' The function will XXXX
+#'
+#' @param XX The XX
+#' @return The function will XX
+#'
+#'
+#' @export
+pick.out.groups<-function(X.mat,all.lbls,grp.picks) {
+
+  pick.out.rows<-NULL
+  new.grp.lbls<-NULL
+  for(i in 1:length(grp.picks))
+  {
+    grp.idxs<-which(as.numeric(all.lbls)==as.numeric(grp.picks[i]))
+    pick.out.rows<-c(pick.out.rows,grp.idxs)
+    #print(grp.idxs)
+    new.grp.lbl<-rep(i,length(grp.idxs))
+    new.grp.lbls<-c(new.grp.lbls,new.grp.lbl)
+  }
+
+  new.grp.lbls<-factor(new.grp.lbls)
+  new.X.mat<-X.mat[pick.out.rows,]
+
+  return(list(new.X.mat,new.grp.lbls))
+
+}
