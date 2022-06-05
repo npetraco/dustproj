@@ -60,10 +60,9 @@ harmonize.QtoKs<-function(Q.mat, K.mat) {
 }
 
 
-
-#' Build adjacency matrix and edge matrix for use with building Q-K graph
+#' Harmonize Q (row) vector with K(s) and build adjacency matrix and edge matrix for use with building local Q-K graph and potentials
 #'
-#' XXXX
+#' Function was make.model.rep in testing scripts
 #'
 #' The function will XXXX
 #'
@@ -74,7 +73,7 @@ harmonize.QtoKs<-function(Q.mat, K.mat) {
 #'
 #'
 #' @export
-make.model.rep <- function(a.Q.vec, a.K.mat, population.adj.mat=NULL, model.type = "model1") {
+local.model.prep <- function(a.Q.vec, a.K.mat, population.adj.mat=NULL, model.type = "model1", printQ=F) {
 
   harmonized.info <- harmonize.QtoKs(a.Q.vec, a.K.mat)
 
@@ -122,7 +121,9 @@ make.model.rep <- function(a.Q.vec, a.K.mat, population.adj.mat=NULL, model.type
           Qn2.ID <- Q.only.category.IDs[j]
           #print(paste0("X",Qn1.ID,"-X",Qn2.ID,"?"))
           if(population.adj.mat[Qn1.ID,Qn2.ID] == 1){ # If Q nodes are connected in the population, connect them here
-            print(paste0("============= YES ============== X",Qn1.ID,"-X",Qn2.ID,"!"))
+            if(printQ == T) {
+              print(paste0("Model 2: ============= YES ============== X",Qn1.ID,"-X",Qn2.ID,"! "))
+            }
 
             # Symmetric model adjacency matrix
             model.adj.mat[harmonized.Q.only.idxs[i], harmonized.Q.only.idxs[j]] <- 1
@@ -161,7 +162,9 @@ make.model.rep <- function(a.Q.vec, a.K.mat, population.adj.mat=NULL, model.type
           count <- count + 1
 
           if(population.adj.mat[Q.ID,QoK.ID] == 1){ # If nodes are connected in the population, connect them here
-            print(paste0("========== YES ========= X",Q.ID,"-X",QoK.ID," ", count))
+            if(printQ == T) {
+              print(paste0("Model 3: ========== YES ========= X",Q.ID,"-X",QoK.ID," ", count))
+            }
 
             # Symmetric model adjacency matrix
             model.adj.mat[harmonized.Q.only.idxs[i], j] <- 1 # j runs over all QK indices, so don't need the translation
@@ -181,8 +184,8 @@ make.model.rep <- function(a.Q.vec, a.K.mat, population.adj.mat=NULL, model.type
 
   }
 
-  model.info        <- list(model.adj.mat, model.edge.mat)
-  names(model.info) <- c("model.adj.mat", "model.edge.mat")
+  model.info        <- list(harmonized.info, model.adj.mat, model.edge.mat)
+  names(model.info) <- c("harmonized.info", "model.adj.mat", "model.edge.mat")
 
   return(model.info)
 

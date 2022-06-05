@@ -41,6 +41,7 @@ rownames(categs.occured) <- NULL
 head(categs.occured,20)
 dim(categs.occured)
 
+# ****** Make a function to compute X.pop !!!!!!!!!!!!
 # Drop the repeats-per-location to form the "population" data:
 lbl       <- fdat$lbl.loc
 lbl.names <- unique(lbl)
@@ -78,16 +79,24 @@ head(X.pop)
 dim(X.pop)
 #lbl.pop
 
-pop.adj.mat <- read.csv("analysis_prototypes/5-24-22_processed_pop_adj_mat.csv", header=F)
+# ****** Make a function to compute pop.adj.mat in the same file as X.pop !!!!!!!!!!!!
+pop.adj.mat <- read.csv("analysis_prototypes/5-24-22_processed_pop_adj_mat.csv", header=F) # see build_population_graph.R
 sum(pop.adj.mat)/2 # Check. Should be edges in the population
 
-#
+
 dim(X)     # All data with non-occuring categories dropped
 dim(X.pop) # "Population" with matching replicates and non-occuring categories dropped
 
+# Tests: -----------------------------------------------------------------
 lbl.names
 Q.idx <- 9  # 1:828 dust vectors
 K.lbl <- 61 # 1:198 locations
+
+# BIG:
+# Q.idx <- 746  # 1:828 dust vectors
+# lbl[Q.idx]  # True location name of the Questioned
+# K.lbl <- 167 # 1:198 locations
+
 
 # True location name of the Questioned
 lblQ.true <- lbl[Q.idx]
@@ -108,13 +117,42 @@ hif$K.only.harmonized.idxs
 # Model 1
 # Treat all Qonly nodes as independent
 #make.model.rep(hif$K.only.harmonized.idxs, hif$Q.only.harmonized.idxs, model.type = "model1")
-make.model.rep(Q, Ks, model.type = "model1")
+mdi <- make.model.rep(Q, Ks, model.type = "model1")
+dim(mdi$model.edge.mat)
+sum(mdi$model.adj.mat)/2
+
+# graph eq, split and plot
+grphf.m1   <- adj2formula(mdi$model.adj.mat)
+grphf.m1
+gp.m1 <- ug(grphf.m1, result = "graph")
+gp.m1
+ccp.list <- connComp(gp.m1)
+ccp.list
+# Should be the known only indices:
+as.numeric(ccp.list[[1]])
+hif$K.only.category.IDs
+hif$K.only.harmonized.idxs
+
+dev.off()
+plot(gp.m1)
+
+gpHD.m1 <- as.gRapHD(mdi$model.edge.mat, p=length(hif$QK.Category.IDs))
+dev.off()
+plot(gpHD.m1, numIter=500, vert.label=T)
+
+
+
 
 # Model 2
 # Connect all Qonly nodes that are dependent in the population, but dont connect them to K nodes
-Q.idx <- 746  # 1:828 dust vectors
+Q.idx <- 9  # 1:828 dust vectors
 lbl[Q.idx]  # True location name of the Questioned
-K.lbl <- 167 # 1:198 locations
+K.lbl <- 61 # 1:198 locations
+
+# BIG:
+# Q.idx <- 746  # 1:828 dust vectors
+# lbl[Q.idx]  # True location name of the Questioned
+# K.lbl <- 167 # 1:198 locations
 
 Q  <- t(X[Q.idx,])            # Questioned dust vector
 Ks <- X[which(lbl == K.lbl),] # Known(s) dust vector(s)
@@ -127,9 +165,29 @@ ql <- length(hif$Q.only.category.IDs)
 kl*(kl-1)/2
 ql*(ql-1)/2
 
-junk <- make.model.rep(Q, Ks, pop.adj.mat, model.type = "model2")
-junk$model.edge.mat
-sum(junk$model.adj.mat)/2
+mdi2 <- make.model.rep(Q, Ks, pop.adj.mat, model.type = "model2", print=T)
+dim(mdi2$model.edge.mat)
+sum(mdi2$model.adj.mat)/2
+
+# graph eq, split and plot
+grphf.m2   <- adj2formula(mdi2$model.adj.mat)
+grphf.m2
+gp.m2 <- ug(grphf.m2, result = "graph")
+gp.m2
+ccp.list <- connComp(gp.m2)
+ccp.list
+# Should also be the known only indices:
+as.numeric(ccp.list[[1]])
+hif$K.only.category.IDs
+hif$K.only.harmonized.idxs
+
+dev.off()
+plot(gp.m2)
+
+gpHD.m2 <- as.gRapHD(mdi2$model.edge.mat, p=length(hif$QK.Category.IDs))
+dev.off()
+plot(gpHD.m2, numIter=1000, vert.label=T)
+
 
 # Model 3
 # Adding Qonly (Q) edges to K nodes and Qnodes:
@@ -140,13 +198,64 @@ sum(junk$model.adj.mat)/2
 #
 # Can we do this as:
 # Loop over Qonly categories and see if they connect to any category in the union QK.Category.IDs (make sure not eq)
+
+# Q.idx <- 9  # 1:828 dust vectors
+# lbl[Q.idx]  # True location name of the Questioned
+# K.lbl <- 61 # 1:198 locations
+
+# BIG:
+Q.idx <- 746  # 1:828 dust vectors
+lbl[Q.idx]  # True location name of the Questioned
+K.lbl <- 167 # 1:198 locations
+
+Q  <- t(X[Q.idx,])            # Questioned dust vector
+Ks <- X[which(lbl == K.lbl),] # Known(s) dust vector(s)
+
+hif <- harmonize.QtoKs(Q, Ks)
 hif$QK.Category.IDs
 hif$Q.only.category.IDs
 hif$K.only.category.IDs
-6*length(hif$QK.Category.IDs) - 6
+length(hif$Q.only.category.IDs)*length(hif$QK.Category.IDs) - length(hif$Q.only.category.IDs)
 
-junk <- make.model.rep(Q, Ks, pop.adj.mat, model.type = "model3")
-junk$model.edge.mat
-sum(junk$model.adj.mat)/2
+mdi3 <- make.model.rep(Q, Ks, pop.adj.mat, model.type = "model3", printQ = T)
+mdi3$model.edge.mat
+dim(mdi3$model.edge.mat)
+sum(mdi3$model.adj.mat)/2
 
 # graph eq, split and plot
+grphf.m3   <- adj2formula(mdi3$model.adj.mat) # This won't work for BIG graphs (LOTS of edges....)
+grphf.m3
+gp.m3 <- ug(grphf.m3, result = "graph")
+gp.m3
+
+# Works on BIG graphs but only returns connected components
+# Must be messing up numbering too because of this......... UGH!!!!!
+#gp.m3 <- ftM2graphNEL(mdi3$model.edge.mat, edgemode="undirected")
+#
+# Doesn't work either......
+#sparseM2Graph(mdi3$model.adj.mat, nodeNames = as.character(1:ncol(mdi3$model.adj.mat)), edgemode="undirected")
+#
+# This needs work .....
+# cl <- sapply(1:ncol(mdi3$model.adj.mat), function(xx){which(mdi3$model.adj.mat[,xx] == 1)})
+# cl[[1]]
+#
+# Try igraph 3 functionality
+igp.m3 <- graph_from_adjacency_matrix(mdi3$model.adj.mat, mode="undirected")
+#plot(igp.m3)
+gp.m3 <- as_graphnel(igp.m3)
+gp.m3
+
+ccp.list <- connComp(gp.m3)
+ccp.list
+# Some Q-nodess may now have been connected to the K-nodes:
+as.numeric(ccp.list[[1]])
+hif$K.only.category.IDs
+hif$K.only.harmonized.idxs
+
+dev.off()
+plot(gp.m3)
+
+gpHD.m3 <- as.gRapHD(mdi3$model.edge.mat, p=length(hif$QK.Category.IDs))
+gpHD.m3
+dev.off()
+plot(gpHD.m3, numIter=1000, vert.label=T)
