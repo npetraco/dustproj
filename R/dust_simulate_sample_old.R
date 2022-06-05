@@ -35,7 +35,7 @@ groupwise.category.freq.mat<-function(dat,lbls){
 #'
 #'
 #' @export
-groupwise.category.freq.mat2<-function(dat, lbls, est.type="MLE"){
+groupwise.category.freq.mat2<-function(dat, lbls, est.type="MLE", prob.adj=NULL){
   grp.nms<-levels(factor(lbls))
   #prob-of-one-mat is groups by categories. Elems give est of prob that that the jth category will be observed in the ith group
   p1.mat<-NULL
@@ -46,11 +46,21 @@ groupwise.category.freq.mat2<-function(dat, lbls, est.type="MLE"){
     } else if(est.type=="Bayes") {
       nn <- nrow(datg)
       sm <- colSums(datg)
-      p1.vec <- (sm+1)/(nn+1+1) #Posterior mean asuming uniform prior
+      p1.vec <- (sm+1)/(nn+1+1) #Posterior mean assuming uniform prior
     } else {
       stop("Specify an estimation type. Choices: MLE or Bayes")
     }
+
+    # Soften 0/1 probs if requested:
+    if(!is.null(prob.adj)){
+      idxs.pr1 <- which(p1.vec == 1)
+      idxs.pr0 <- which(p1.vec == 0)
+      p1.vec[idxs.pr1] <- 1-prob.adj # Make 1 probs a little less
+      p1.vec[idxs.pr0] <- prob.adj   # Make 0 probs a little more
+    }
+
     p1.mat<-rbind(p1.mat,p1.vec)
+
   }
 
   return(p1.mat)
@@ -58,6 +68,7 @@ groupwise.category.freq.mat2<-function(dat, lbls, est.type="MLE"){
 }
 
 #' Simulate a dust sample, old version assuming cell independence
+#' Complicated but works
 #'
 #' Was called: simulate.sample
 #'
@@ -68,7 +79,7 @@ groupwise.category.freq.mat2<-function(dat, lbls, est.type="MLE"){
 #'
 #'
 #' @export
-simulate.dust.sample.old<-function(cat.ind.vec, num.sims, prob.of.1.mat) {
+simulate.dust.sample.type1<-function(cat.ind.vec, num.sims, prob.of.1.mat) {
 
   sim.grp<-array(NA,c(num.sims,length(cat.ind.vec)))
   #print(dim(sim.grp))
@@ -123,4 +134,24 @@ simulate.dust.sample.old<-function(cat.ind.vec, num.sims, prob.of.1.mat) {
   }
 
   return(sim.grp)
+}
+
+
+#' Simple simulate a dust sample, assuming cell independence
+#'
+#'
+#' Use ONLY to simulate samples from the same location where you'd expect observed
+#' categories to show up a lot and unobserved categories to almost never show up
+#'
+#' The function will XXXX
+#'
+#' @param XX The XX
+#' @return The function will XX
+#'
+#'
+#' @export
+simulate.dust.sample.simple<-function(num.sims, prob.vec) {
+
+  simple.sim.samp <- sapply(1:length(prob.vec), function(xx){sample(c(1,0), size = num.sims, prob = c(prob.vec[xx], 1-prob.vec[xx]), replace = T)})
+  return(simple.sim.samp)
 }
