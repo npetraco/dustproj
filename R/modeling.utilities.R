@@ -407,8 +407,10 @@ population.model.prep <- function(a.Q.vec, a.K.mat, population.adj.mat, printQ=F
 
   model.adj.mat  <- population.adj.mat[QK.Category.IDs, QK.Category.IDs]
   model.adj.mat  <- as.matrix(model.adj.mat) # Was in data.frame format which some things don't like
-  model.edge.mat <- NULL
+  rownames(model.adj.mat) <- all.KQ.idxs # **NOTE: Takes IDs from NC-IDs -> "Harmonized"-IDs wrt this adjacency matrix
+  colnames(model.adj.mat) <- all.KQ.idxs # **NOTE: Takes IDs from NC-IDs -> "Harmonized"-IDs wrt this adjacency matrix
 
+  model.edge.mat <- NULL
   for(i in 1:num.nodes) {
     for(j in 1:num.nodes) {
       if(i < j) {
@@ -594,5 +596,106 @@ make.QK.population.harmonized.affinities <- function(a.harmonized.info.list, an.
 
   return(affinity.info)
 
+
+}
+
+
+
+#' Extract the info needed to feed to CRF/CRFutil
+#'
+#' The function was called
+#'
+#' The function will XXXX
+#'
+#' @param XX The XX
+#' @details XXXX
+#'
+#' @return The function will XX
+#'
+#'
+#' @export
+get.component.graph.info <- function(component.graph.nodes, a.model.adj.mat, affinities.info, a.harmonized.info) {
+
+  harmonized.idxs <- as.numeric(component.graph.nodes)
+  if(NA %in% harmonized.idxs) { # component.graph.nodes must contain only numbers. No non-number characters!
+    stop("NAs from component.graph.nodes names. Check to see that they are numbers.")
+  }
+
+  # Form adjacency matrix of this connected component:
+  component.graph.idxs <- 1:length(harmonized.idxs)
+  component.adj.mat    <- a.model.adj.mat[harmonized.idxs,harmonized.idxs]
+  colnames(component.adj.mat) <- component.graph.idxs # **NOTE: "Harmonized"-IDs to this specific connected component IDs
+  rownames(component.adj.mat) <- component.graph.idxs # **NOTE: "Harmonized"-IDs to this specific connected component IDs
+  #print(component.adj.mat)
+
+  # Node info:
+  num.nodes          <- length(harmonized.idxs)
+  node.names         <- names(affinities.info$node.affinities)
+  node.affinity.idxs <- sapply(1:num.nodes, function(xx){which(node.names == harmonized.idxs[xx])})
+  node.affinities    <- affinities.info$node.affinities[node.affinity.idxs]
+  #print(node.affinities)
+
+
+
+  # Edge info:
+  # Form edge mats of this connected component:
+  hm.edge.mat <- NULL # Edge matrix in terms of "Harmonized" node indices, which are probably non-contiguous
+  cc.edge.mat <- NULL # Edge matrix in terms of component graph idxs, which are contiguous
+  for(i in 1:length(component.graph.idxs)) {
+    for(j in 1:length(component.graph.idxs)) {
+      if(harmonized.idxs[i] < harmonized.idxs[j]) {
+        if(i<j){ # Just to double check that this is true too
+          if(component.adj.mat[i,j] == 1) {
+            hm.edge.mat <- rbind(hm.edge.mat, c(harmonized.idxs[i], harmonized.idxs[j]))
+            cc.edge.mat <- rbind(cc.edge.mat, c(i,j))
+          }
+        } else {
+          stop("Check conected component edge node order. Should be L < R!") # i<j if check
+        }
+      }
+    }
+  }
+  #print(hm.edge.mat)
+  #print(cc.edge.mat)
+
+  # Pull out edge affinities required for this connected component graph:
+  num.edges     <- nrow(hm.edge.mat)
+  # Edge names of this connected component, in-terms of the harmonized indices
+  hm.edge.names <- sapply(1:num.edges, function(xx){paste0(hm.edge.mat[xx,], collapse = "-")})
+
+  # All edge names (also in-terms of the harmonized indices)
+  edge.affinity.names <- names(affinities.info$edge.affinities)
+
+  # See what edge numbers are of the edges for this component graph
+  edge.affinity.idxs  <- sapply(1:length(hm.edge.names), function(xx){which(edge.affinity.names == hm.edge.names[xx])})
+
+  # Pull out the required edge affinities:
+  edge.affinities     <- affinities.info$edge.affinities[edge.affinity.idxs]
+  #print(edge.affinities)
+
+
+  # Node index/ID translation info after all the reductions/re-indexing we've done:
+  idx.translation.mat           <- cbind(a.harmonized.info$QK.Category.IDs[harmonized.idxs], harmonized.idxs, component.graph.idxs)
+  colnames(idx.translation.mat) <- c("QK.Category.IDs", "harmonized.idxs", "component.graph.idxs") # **NOTE: QK.Category.IDs are the NC indices from the population data, i.e. the OG indices AFTER non-occurring categories were dropped and re-indexing was done.
+  #print(idx.translation.mat)
+
+  graph.component.info <- list(
+    component.adj.mat,
+    hm.edge.mat,
+    cc.edge.mat,
+    idx.translation.mat,
+    node.affinities,
+    edge.affinities
+  )
+  names(graph.component.info) <- c(
+    "component.adj.mat",
+    "harmonized.edge.mat",
+    "component.edge.mat",
+    "idx.translation.mat",
+    "node.affinities",
+    "edge.affinities"
+  )
+
+  return(graph.component.info)
 
 }

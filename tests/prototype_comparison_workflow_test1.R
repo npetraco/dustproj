@@ -145,6 +145,22 @@ plot(gphHD.pop, numIter=1000, vert.label=T)
 
 
 # Component separations
-# Local
-ccp.list.loc <- connComp(gph.loc)
-ccp.list.loc[[1]] #
+# Population
+ccp.list.pop <- connComp(gph.pop)
+ccp.list.pop
+as.numeric(ccp.list.pop[[4]]) # for each multinode component
+# Get adj mat
+# Store "harmonized" node ID so we don't loose them.
+# From adj mat, construct edge mat (with "harmonized" IDs or new reduced for the second time IDs??)
+# match edge to a model.edge.mat row and pull the corresponding affinity
+cii <- get.component.graph.info(
+  component.graph.nodes = ccp.list.pop[[4]],
+  a.model.adj.mat       = pop.prep$model.adj.mat,
+  affinities.info       = pop.affs,
+  a.harmonized.info     = pop.prep$harmonized.info)
+cii$component.adj.mat
+cii$harmonized.edge.mat
+cii$component.edge.mat
+cii$idx.translation.mat
+cii$node.affinities
+cii$edge.affinities
