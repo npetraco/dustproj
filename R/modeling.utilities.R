@@ -621,57 +621,81 @@ get.component.graph.info <- function(component.graph.nodes, a.model.adj.mat, aff
     stop("NAs from component.graph.nodes names. Check to see that they are numbers.")
   }
 
-  # Form adjacency matrix of this connected component:
-  component.graph.idxs <- 1:length(harmonized.idxs)
-  component.adj.mat    <- a.model.adj.mat[harmonized.idxs,harmonized.idxs]
-  colnames(component.adj.mat) <- component.graph.idxs # **NOTE: "Harmonized"-IDs to this specific connected component IDs
-  rownames(component.adj.mat) <- component.graph.idxs # **NOTE: "Harmonized"-IDs to this specific connected component IDs
-  #print(component.adj.mat)
+  if(length(harmonized.idxs) == 1) {
 
-  # Node info:
-  num.nodes          <- length(harmonized.idxs)
-  node.names         <- names(affinities.info$node.affinities)
-  node.affinity.idxs <- sapply(1:num.nodes, function(xx){which(node.names == harmonized.idxs[xx])})
-  node.affinities    <- affinities.info$node.affinities[node.affinity.idxs]
-  #print(node.affinities)
+    # None of these are applicable for just a node
+    component.adj.mat    <- NULL
+    hm.edge.mat          <- NULL
+    cc.edge.mat          <- NULL
+    edge.affinities      <- NULL
+    component.graph.idxs <- 1
+
+    # For one unconnected node, just pull the node affinity and normalize it if it isn't already
+    # Node info (recycled from below):
+    num.nodes          <- length(harmonized.idxs) # Should be 1 here.
+    node.names         <- names(affinities.info$node.affinities)
+    node.affinity.idxs <- sapply(1:num.nodes, function(xx){which(node.names == harmonized.idxs[xx])})
+    node.affinities    <- affinities.info$node.affinities[node.affinity.idxs]
+
+    if(sum(node.affinities[[1]]) != 100) { # **NOTE: Assumes we normalized on the %-scale, which we did above.
+      node.affinities[[1]] <- node.affinities[[1]]/sum(node.affinities[[1]]) * 100
+    }
+
+  } else { # More than two nodes are a connected component graph
+
+    # Form adjacency matrix of this connected component:
+    component.graph.idxs <- 1:length(harmonized.idxs)
+    component.adj.mat    <- a.model.adj.mat[harmonized.idxs,harmonized.idxs]
+    colnames(component.adj.mat) <- component.graph.idxs # **NOTE: "Harmonized"-IDs to this specific connected component IDs
+    rownames(component.adj.mat) <- component.graph.idxs # **NOTE: "Harmonized"-IDs to this specific connected component IDs
+    #print(component.adj.mat)
+
+    # Node info:
+    num.nodes          <- length(harmonized.idxs)
+    node.names         <- names(affinities.info$node.affinities)
+    node.affinity.idxs <- sapply(1:num.nodes, function(xx){which(node.names == harmonized.idxs[xx])})
+    node.affinities    <- affinities.info$node.affinities[node.affinity.idxs]
+    #print(node.affinities)
 
 
 
-  # Edge info:
-  # Form edge mats of this connected component:
-  hm.edge.mat <- NULL # Edge matrix in terms of "Harmonized" node indices, which are probably non-contiguous
-  cc.edge.mat <- NULL # Edge matrix in terms of component graph idxs, which are contiguous
-  for(i in 1:length(component.graph.idxs)) {
-    for(j in 1:length(component.graph.idxs)) {
-      if(harmonized.idxs[i] < harmonized.idxs[j]) {
-        if(i<j){ # Just to double check that this is true too
-          if(component.adj.mat[i,j] == 1) {
-            hm.edge.mat <- rbind(hm.edge.mat, c(harmonized.idxs[i], harmonized.idxs[j]))
-            cc.edge.mat <- rbind(cc.edge.mat, c(i,j))
+    # Edge info:
+    # Form edge mats of this connected component:
+    hm.edge.mat <- NULL # Edge matrix in terms of "Harmonized" node indices, which are probably non-contiguous
+    cc.edge.mat <- NULL # Edge matrix in terms of component graph idxs, which are contiguous
+    for(i in 1:length(component.graph.idxs)) {
+      for(j in 1:length(component.graph.idxs)) {
+        if(harmonized.idxs[i] < harmonized.idxs[j]) {
+          if(i<j){ # Just to double check that this is true too
+            if(component.adj.mat[i,j] == 1) {
+              hm.edge.mat <- rbind(hm.edge.mat, c(harmonized.idxs[i], harmonized.idxs[j]))
+              cc.edge.mat <- rbind(cc.edge.mat, c(i,j))
+            }
+          } else {
+            stop("Check conected component edge node order. Should be L < R!") # i<j if check
           }
-        } else {
-          stop("Check conected component edge node order. Should be L < R!") # i<j if check
         }
       }
     }
-  }
-  #print(hm.edge.mat)
-  #print(cc.edge.mat)
+    #print(hm.edge.mat)
+    #print(cc.edge.mat)
 
-  # Pull out edge affinities required for this connected component graph:
-  num.edges     <- nrow(hm.edge.mat)
-  # Edge names of this connected component, in-terms of the harmonized indices
-  hm.edge.names <- sapply(1:num.edges, function(xx){paste0(hm.edge.mat[xx,], collapse = "-")})
+    # Pull out edge affinities required for this connected component graph:
+    num.edges     <- nrow(hm.edge.mat)
+    # Edge names of this connected component, in-terms of the harmonized indices
+    hm.edge.names <- sapply(1:num.edges, function(xx){paste0(hm.edge.mat[xx,], collapse = "-")})
 
-  # All edge names (also in-terms of the harmonized indices)
-  edge.affinity.names <- names(affinities.info$edge.affinities)
+    # All edge names (also in-terms of the harmonized indices)
+    edge.affinity.names <- names(affinities.info$edge.affinities)
 
-  # See what edge numbers are of the edges for this component graph
-  edge.affinity.idxs  <- sapply(1:length(hm.edge.names), function(xx){which(edge.affinity.names == hm.edge.names[xx])})
+    # See what edge numbers are of the edges for this component graph
+    edge.affinity.idxs  <- sapply(1:length(hm.edge.names), function(xx){which(edge.affinity.names == hm.edge.names[xx])})
 
-  # Pull out the required edge affinities:
-  edge.affinities     <- affinities.info$edge.affinities[edge.affinity.idxs]
-  #print(edge.affinities)
+    # Pull out the required edge affinities:
+    edge.affinities     <- affinities.info$edge.affinities[edge.affinity.idxs]
+    #print(edge.affinities)
+
+  } # end else
 
 
   # Node index/ID translation info after all the reductions/re-indexing we've done:
