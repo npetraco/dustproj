@@ -131,9 +131,7 @@ dev.off()
 plot(gphHD.loc, numIter=1000, vert.label=T)
 
 # Population:
-class(pop.prep$model.adj.mat)
-class(loc.prep$model.adj.mat)
-gph.pop <- graph_from_adjacency_matrix(as.matrix(pop.prep$model.adj.mat), mode="undirected")
+gph.pop <- graph_from_adjacency_matrix(pop.prep$model.adj.mat, mode="undirected")
 # graphNEL format:
 gph.pop <- as_graphnel(gph.pop)
 gph.pop # Check
@@ -148,5 +146,5 @@ plot(gphHD.pop, numIter=1000, vert.label=T)
 
 # Component separations
 # Local
-ccp.list <- connComp(gph.loc)
-ccp.list
+ccp.list.loc <- connComp(gph.loc)
+ccp.list.loc[[1]] #
