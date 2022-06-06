@@ -101,22 +101,53 @@ K.lbl <- 167 # 1:198 locations
 Q  <- t(X[Q.idx,])            # Questioned dust vector
 Ks <- X[which(lbl == K.lbl),] # Known(s) dust vector(s)
 
-mdi <- make.model.rep(Q, Ks, pop.adj.mat, model.type = "model3", printQ = T)
+mdi <- local.model.prep(Q, Ks, pop.adj.mat, model.type = "model2", printQ = T)
 mdi$model.edge.mat
 dim(mdi$model.edge.mat)
 sum(mdi$model.adj.mat)/2
 
-head(mdi$model.edge.mat)
-mdi$model.edge.mat[3,]
-mdi$model.edge.mat[3,1] %in% mdi$harmonized.info$Q.only.harmonized.idxs
-mdi$model.edge.mat[3,1] %in% mdi$harmonized.info$K.only.harmonized.idxs
+junk.harmonized.info <- harmonize.QtoKs(Q,Ks)
 
-# Index Translation Matrices:
-cbind(
-  mdi$harmonized.info$Q.only.harmonized.idxs,
-  mdi$harmonized.info$Q.only.category.IDs
+# Return sims incase we need to bug check
+make.QK.harmonized.affinities(junk.harmonized.info, mdi$model.edge.mat,
+                              population.datamat = X.pop, num.local.sims = 629-5, normalizeQ = F,
+                              printQ=T)
+#
+
+
+
+
+
+junk.harmonized.info$Q.only.harmonized.idxs
+junk.harmonized.info$Q.only.category.IDs
+X.pop[,295]
+junk.harmonized.info$K.only.harmonized.idxs
+junk.harmonized.info$K.only.category.IDs
+junk.harmonized.info$K.harmonized[,52]
+junk.harmonized.info$QK.Category.IDs
+#
+
+
+
+
+
+tt <- rbind(
+  c(111, 143),
+  c(0, 0)
 )
-cbind(
-  mdi$harmonized.info$K.only.harmonized.idxs,
-  mdi$harmonized.info$K.only.category.IDs
+rownames(tt) <- c(1,0)
+colnames(tt) <- c(1,0)
+tt <- as.table(tt)
+class(tt)
+names(attributes(tt)$dimnames) <- c(18,4)
+tt
+nrow(which(tt == 0, arr.ind = T))
+zi <- which(tt == 0, arr.ind = T)
+tt[zi] <- 1
+tt
+ceiling(tt/sum(tt) * 100)
+
+tt2 <- table(
+  factor(X.pop[,1], levels = c(1,0)),
+  factor(X.pop[,1], levels = c(1,0))
 )
