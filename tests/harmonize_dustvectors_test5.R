@@ -101,77 +101,31 @@ K.lbl <- 167 # 1:198 locations
 Q  <- t(X[Q.idx,])            # Questioned dust vector
 Ks <- X[which(lbl == K.lbl),] # Known(s) dust vector(s)
 
-mdi <- local.model.prep(Q, Ks, pop.adj.mat, model.type = "model3", printQ = T)
-mdi$model.edge.mat
-dim(mdi$model.edge.mat)
-sum(mdi$model.adj.mat)/2
+# Population model for Q K comparison
+pmdi <- population.model.prep(Q, Ks, pop.adj.mat)
+dim(pmdi$model.adj.mat)
+pmdi$model.edge.mat
 
-junk.harmonized.info <- harmonize.QtoKs(Q,Ks)
+grphf.pop.harm <- adj2formula(pmdi$model.adj.mat)
+grphf.pop.harm
+gp.pop.harm <- ug(grphf.pop.harm, result = "graph")
+gp.pop.harm
+dev.off()
+plot(gp.pop.harm)
 
-# Return sims incase we need to bug check
-junk <- make.QK.harmonized.affinities(mdi$harmonized.info, mdi$model.edge.mat,
-                                      population.datamat = X.pop, num.local.sims = 629-5,
-                                      normalizeQ = T, printQ=F)
-na <- junk$node.affinities
-na$`2`
-ea <- junk$edge.affinities
-ea
+ccp.list <- connComp(gp.pop.harm)
+ccp.list
 
-# Check edge node order:
-sum(mdi$model.edge.mat[,1] < mdi$model.edge.mat[,2])
-dim(mdi$model.edge.mat)
-#
-
-
-#
-paste0(mdi$model.edge.mat[1,1],"-",mdi$model.edge.mat[1,2])
-paste0(mdi$model.edge.mat[1,], collapse = "-")
-paste0(mdi$model.edge.mat,collapse = "-")
-
-X.pop[,76]
-table(X.pop[,76])
-c(sum(X.pop[,76]==1), sum(X.pop[,76]==0))
-
-tn <- c(235,1)
-tn <- as.table(tn)
-names(tn) <- c(1,0)
-tn
-names(attributes(tn)$dimnames) <- c(87)
-tn
-#
+gpHD.pop.harm <- as.gRapHD(pmdi$model.edge.mat, p=ncol(pmdi$model.adj.mat))
+gpHD.pop.harm
+dev.off()
+plot(gpHD.pop.harm, numIter=1000, vert.label=T)
 
 
+junk <- make.QK.population.harmonized.affinities(
+  pmdi$harmonized.info, pmdi$model.edge.mat,
+  population.datamat = X.pop,
+  normalizeQ = T, printQ=F)
 
-junk.harmonized.info$Q.only.harmonized.idxs
-junk.harmonized.info$Q.only.category.IDs
-X.pop[,295]
-junk.harmonized.info$K.only.harmonized.idxs
-junk.harmonized.info$K.only.category.IDs
-junk.harmonized.info$K.harmonized[,52]
-junk.harmonized.info$QK.Category.IDs
-#
-
-
-
-
-
-tt <- rbind(
-  c(111, 143),
-  c(0, 0)
-)
-rownames(tt) <- c(1,0)
-colnames(tt) <- c(1,0)
-tt <- as.table(tt)
-class(tt)
-names(attributes(tt)$dimnames) <- c(18,4)
-tt
-nrow(which(tt == 0, arr.ind = T))
-zi <- which(tt == 0, arr.ind = T)
-tt[zi] <- 1
-tt
-ceiling(tt/sum(tt) * 100)
-
-tt2 <- table(
-  factor(X.pop[,1], levels = c(1,0)),
-  factor(X.pop[,1], levels = c(1,0))
-)
+junk$node.affinities
+junk$edge.affinities

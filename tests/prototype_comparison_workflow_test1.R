@@ -89,89 +89,64 @@ dim(X.pop) # "Population" with matching replicates and non-occuring categories d
 
 # Tests: -----------------------------------------------------------------
 # Small:
-# Q.idx <- 9  # 1:828 dust vectors
-# lbl[Q.idx]  # True location name of the Questioned
-# K.lbl <- 61 # 1:198 locations
+Q.idx <- 9  # 1:828 dust vectors
+lbl[Q.idx]  # True location name of the Questioned
+K.lbl <- 61 # 1:198 locations
 
 # BIG:
-Q.idx <- 746  # 1:828 dust vectors
-lbl[Q.idx]  # True location name of the Questioned
-K.lbl <- 167 # 1:198 locations
+# Q.idx <- 746  # 1:828 dust vectors
+# lbl[Q.idx]  # True location name of the Questioned
+# K.lbl <- 167 # 1:198 locations
 
 Q  <- t(X[Q.idx,])            # Questioned dust vector
 Ks <- X[which(lbl == K.lbl),] # Known(s) dust vector(s)
 
-mdi <- local.model.prep(Q, Ks, pop.adj.mat, model.type = "model3", printQ = T)
-mdi$model.edge.mat
-dim(mdi$model.edge.mat)
-sum(mdi$model.adj.mat)/2
+# Get local model and local affinities:
+loc.prep <- local.model.prep(Q, Ks, pop.adj.mat, model.type = "model3", printQ = T)
+loc.affs <- make.QK.local.harmonized.affinities(
+  loc.prep$harmonized.info, loc.prep$model.edge.mat,
+  population.datamat = X.pop, #num.local.sims = 629-5,
+  normalizeQ = T, printQ=F)
 
-junk.harmonized.info <- harmonize.QtoKs(Q,Ks)
-
-# Return sims incase we need to bug check
-junk <- make.QK.harmonized.affinities(mdi$harmonized.info, mdi$model.edge.mat,
-                                      population.datamat = X.pop, num.local.sims = 629-5,
-                                      normalizeQ = T, printQ=F)
-na <- junk$node.affinities
-na$`2`
-ea <- junk$edge.affinities
-ea
-
-# Check edge node order:
-sum(mdi$model.edge.mat[,1] < mdi$model.edge.mat[,2])
-dim(mdi$model.edge.mat)
-#
+# Get Population model and population affinities
+pop.prep <- population.model.prep(Q, Ks, pop.adj.mat)
+pop.affs <- make.QK.population.harmonized.affinities(
+  pop.prep$harmonized.info, pop.prep$model.edge.mat,
+  population.datamat = X.pop,
+  normalizeQ = T, printQ=F)
 
 
-#
-paste0(mdi$model.edge.mat[1,1],"-",mdi$model.edge.mat[1,2])
-paste0(mdi$model.edge.mat[1,], collapse = "-")
-paste0(mdi$model.edge.mat,collapse = "-")
+# Plots
+# Local:
+gph.loc <- graph_from_adjacency_matrix(loc.prep$model.adj.mat, mode="undirected")
+# graphNEL format:
+gph.loc <- as_graphnel(gph.loc)
+gph.loc # Check
+dev.off()
+plot(gph.loc)
+# grapHD format:
+gphHD.loc <- as.gRapHD(loc.prep$model.edge.mat, p=length(loc.affs$node.affinities))
+gphHD.loc # Check
+dev.off()
+plot(gphHD.loc, numIter=1000, vert.label=T)
 
-X.pop[,76]
-table(X.pop[,76])
-c(sum(X.pop[,76]==1), sum(X.pop[,76]==0))
-
-tn <- c(235,1)
-tn <- as.table(tn)
-names(tn) <- c(1,0)
-tn
-names(attributes(tn)$dimnames) <- c(87)
-tn
-#
-
-
-
-junk.harmonized.info$Q.only.harmonized.idxs
-junk.harmonized.info$Q.only.category.IDs
-X.pop[,295]
-junk.harmonized.info$K.only.harmonized.idxs
-junk.harmonized.info$K.only.category.IDs
-junk.harmonized.info$K.harmonized[,52]
-junk.harmonized.info$QK.Category.IDs
-#
-
-
-
+# Population:
+class(pop.prep$model.adj.mat)
+class(loc.prep$model.adj.mat)
+gph.pop <- graph_from_adjacency_matrix(as.matrix(pop.prep$model.adj.mat), mode="undirected")
+# graphNEL format:
+gph.pop <- as_graphnel(gph.pop)
+gph.pop # Check
+dev.off()
+plot(gph.pop)
+# grapHD format:
+gphHD.pop <- as.gRapHD(pop.prep$model.edge.mat, p=length(pop.affs$node.affinities))
+gphHD.pop # Check
+dev.off()
+plot(gphHD.pop, numIter=1000, vert.label=T)
 
 
-tt <- rbind(
-  c(111, 143),
-  c(0, 0)
-)
-rownames(tt) <- c(1,0)
-colnames(tt) <- c(1,0)
-tt <- as.table(tt)
-class(tt)
-names(attributes(tt)$dimnames) <- c(18,4)
-tt
-nrow(which(tt == 0, arr.ind = T))
-zi <- which(tt == 0, arr.ind = T)
-tt[zi] <- 1
-tt
-ceiling(tt/sum(tt) * 100)
-
-tt2 <- table(
-  factor(X.pop[,1], levels = c(1,0)),
-  factor(X.pop[,1], levels = c(1,0))
-)
+# Component separations
+# Local
+ccp.list <- connComp(gph.loc)
+ccp.list
