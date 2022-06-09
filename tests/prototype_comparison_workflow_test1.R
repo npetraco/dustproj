@@ -107,6 +107,7 @@ loc.affs <- make.QK.local.harmonized.affinities(
   loc.prep$harmonized.info, loc.prep$model.edge.mat,
   population.datamat = X.pop, #num.local.sims = 629-5,
   normalizeQ = T, printQ=F)
+dim(loc.prep$harmonized.info$K.harmonized)
 
 # Get Population model and population affinities
 pop.prep <- population.model.prep(Q, Ks, pop.adj.mat)
@@ -123,7 +124,7 @@ gph.loc <- graph_from_adjacency_matrix(loc.prep$model.adj.mat, mode="undirected"
 gph.loc <- as_graphnel(gph.loc)
 gph.loc # Check
 dev.off()
-plot(gph.loc)
+#plot(gph.loc)
 # grapHD format:
 gphHD.loc <- as.gRapHD(loc.prep$model.edge.mat, p=length(loc.affs$node.affinities))
 gphHD.loc # Check
@@ -145,24 +146,105 @@ plot(gphHD.pop, numIter=1000, vert.label=T)
 
 
 # Component separations
-# Population
-ccp.list.pop <- connComp(gph.pop)
-ccp.list.pop
-as.numeric(ccp.list.pop[[2]]) # for each multinode component
+# Local
+dev.off()
+plot(gphHD.loc, numIter=1000, vert.label=T) # To remember what things looked like
+ccp.list.loc <- connComp(gph.loc)
+ccp.list.loc
+as.numeric(ccp.list.loc[[1]]) # for each multinode component
 # Get adj mat
 # Store "harmonized" node ID so we don't loose them.
 # From adj mat, construct edge mat (with "harmonized" IDs or new reduced for the second time IDs??)
 # match edge to a model.edge.mat row and pull the corresponding affinity
-cii <- get.component.graph.info(
-  component.graph.nodes = ccp.list.pop[[6]],
+cil <- get.component.graph.info(
+  component.graph.nodes = ccp.list.loc[[1]],
+  a.model.adj.mat       = loc.prep$model.adj.mat,
+  affinities.info       = loc.affs,
+  a.harmonized.info     = loc.prep$harmonized.info)
+
+cil$component.adj.mat
+cil$harmonized.edge.mat
+cil$component.edge.mat
+cil$idx.translation.mat
+cil$node.affinities
+cil$edge.affinities
+
+
+# Population
+dev.off()
+plot(gphHD.pop, numIter=1000, vert.label=T) # To remember what things looked like
+ccp.list.pop <- connComp(gph.pop)
+ccp.list.pop
+as.numeric(ccp.list.pop[[1]]) # for each multinode component
+# Get adj mat
+# Store "harmonized" node ID so we don't loose them.
+# From adj mat, construct edge mat (with "harmonized" IDs or new reduced for the second time IDs??)
+# match edge to a model.edge.mat row and pull the corresponding affinity
+cip <- get.component.graph.info(
+  component.graph.nodes = ccp.list.pop[[1]],
   a.model.adj.mat       = pop.prep$model.adj.mat,
   affinities.info       = pop.affs,
   a.harmonized.info     = pop.prep$harmonized.info)
 
-cii$component.adj.mat
-cii$harmonized.edge.mat
-cii$component.edge.mat
-cii$idx.translation.mat
-cii$node.affinities
-cii$edge.affinities
+cip$component.adj.mat
+cip$harmonized.edge.mat
+cip$component.edge.mat
+cip$idx.translation.mat
+cip$node.affinities
+cip$edge.affinities
 
+
+# Belief propagation tests:
+gs.min <- make.crf(cil$component.adj.mat, 2)
+#gs.min <- make.empty.field(adj.mat = cil$component.adj.mat, parameterization.typ = "general")
+dump.crf(gs.min)
+gs.min$edge.par
+
+cil$edge.affinities
+gs.min$edge.pot <- cil$edge.affinities
+gs.min$edge.pot
+
+
+cil$node.affinities[[23]]
+naf <- t(sapply(1:length(cil$node.affinities), function(xx){cil$node.affinities[[xx]]}))
+naf
+#naf[21,] <- c(99.9, 100-99.9)
+naf
+gs.min$node.pot <- naf
+gs.min$node.pot
+
+li <- infer.lbp(gs.min,max.iter = 10000)
+li$logZ
+
+li$node.bel
+li$edge.bel
+
+
+comp.categ.idxs.hz <- cil$idx.translation.mat[,"harmonized.idxs"]
+XQ <- t(as.matrix(loc.prep$harmonized.info$Q.harmonized[comp.categ.idxs.hz])) # Q dust vector chunk for this component
+XK <- loc.prep$harmonized.info$K.harmonized[5,comp.categ.idxs.hz]             # dust vector chunk of a K for this component
+XK # 3, it6
+   # 5, it33
+   # 4, it29
+XQ
+length(XQ)
+length(XK)
+length(round(li$node.bel[,1],2))
+
+cbind(
+  round(li$node.bel[,1],2),
+  #t(XQ)
+  XK
+)
+junk <- loc.affs$K.harmonized.local[,comp.categ.idxs.hz]
+dim(junk)
+junk[,3]
+naf
+cil$node.affinities[[3]]
+
+cil$harmonized.edge.mat
+cil$component.edge.mat
+cil$edge.affinities
+
+
+# Next test getting configuration probabilities from the affinities
