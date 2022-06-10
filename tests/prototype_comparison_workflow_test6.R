@@ -1,14 +1,14 @@
 source("/Users/karen2/latex/papers/dust/steph_diss/analysis_prototypes/test_load_data_for_prob_models.R")
 
 # Smaller test:
-Q.idx <- 9  # 1:828 dust vectors
-lbl[Q.idx]  # True location name of the Questioned
-K.lbl <- 61 # 1:198 locations
+# Q.idx <- 9  # 1:828 dust vectors
+# lbl[Q.idx]  # True location name of the Questioned
+# K.lbl <- 61 # 1:198 locations
 
 # BIGGER test:
-# Q.idx <- 746  # 1:828 dust vectors
-# lbl[Q.idx]  # True location name of the Questioned
-# K.lbl <- 167 # 1:198 locations
+Q.idx <- 746  # 1:828 dust vectors
+lbl[Q.idx]  # True location name of the Questioned
+K.lbl <- 167 # 1:198 locations
 
 Q  <- t(X[Q.idx,])            # Questioned dust vector
 Ks <- X[which(lbl == K.lbl),] # Known(s) dust vector(s)
@@ -26,15 +26,18 @@ ccp.list.loc
 
 # Do this for each multinode graph component:
 # Step 1a If graph component is multinode, get required node and edge info, make CRF object and insert graph component affinities
-gcomp.idx      <- 1
+gcomp.idx      <- 2
 gcomp.mrf.info <- make.component.mrf(ccp.list.loc[[gcomp.idx]], lprep, laff.info)
 
 # Step 2 extract nodes corresponding to the component graph
 # and compute energy of configuration for nodes in component and normalize
 comp.nd.idxs <- gcomp.mrf.info$harmonized.node.idxs.for.mrf            # ******* CRITICAL!!!!!!!!!!!
+comp.nd.idxs
 XKs          <- lprep$QK.harmonized.info$K.harmonized[ , comp.nd.idxs]
 XQ           <- lprep$QK.harmonized.info$Q.harmonized[comp.nd.idxs]
 t(rbind(XQ, XKs))
+XQ
+XKs
 #dim(XKs)
 #length(ccp.list.loc[[gcomp.idx]])
 
@@ -42,6 +45,11 @@ t(rbind(XQ, XKs))
 s1 <- 1
 s2 <- 0
 f  <- function(y){ as.numeric(c((y==s1),(y==s2))) }
+
+class(XKs)
+XKs
+compute.component.graph.dust.config.prob.info(XKs[1], gcomp.mrf.info, f, printQ = T)
+compute.component.graph.dust.config.prob.info(XQ, gcomp.mrf.info, f, printQ = T)
 
 compute.component.graph.dust.config.prob.info(XKs[1,], gcomp.mrf.info, f, printQ = T)
 compute.component.graph.dust.config.prob.info(XKs[2,], gcomp.mrf.info, f, printQ = T)

@@ -1023,16 +1023,18 @@ get.component.graph.info <- function(component.graph.nodes, a.model.adj.mat, aff
     edge.affinities      <- NULL
     component.graph.idxs <- 1
 
-    # For one unconnected node, just pull the node affinity and normalize it if it isn't already
+    # For one unconnected node, just pull the node affinity BUT hold off on  normalizing. Well
+    # do that in make.component.mrf
+
     # Node info (recycled from below):
     num.nodes          <- length(harmonized.idxs) # Should be 1 here.
     node.names         <- names(affinities.info$node.affinities)
     node.affinity.idxs <- sapply(1:num.nodes, function(xx){which(node.names == harmonized.idxs[xx])})
     node.affinities    <- affinities.info$node.affinities[node.affinity.idxs]
 
-    if(sum(node.affinities[[1]]) != 100) { # **NOTE: Assumes we normalized on the %-scale, which we did above.
-      node.affinities[[1]] <- node.affinities[[1]]/sum(node.affinities[[1]]) * 100
-    }
+    # if(sum(node.affinities[[1]]) != 100) { # **NOTE: Assumes we normalized on the %-scale, which we did above.
+    #   node.affinities[[1]] <- node.affinities[[1]]/sum(node.affinities[[1]]) * 100
+    # }
 
   } else { # More than two nodes are a connected component graph
 
@@ -1049,7 +1051,6 @@ get.component.graph.info <- function(component.graph.nodes, a.model.adj.mat, aff
     node.affinity.idxs <- sapply(1:num.nodes, function(xx){which(node.names == harmonized.idxs[xx])})
     node.affinities    <- affinities.info$node.affinities[node.affinity.idxs]
     #print(node.affinities)
-
 
 
     # Edge info:
@@ -1092,7 +1093,14 @@ get.component.graph.info <- function(component.graph.nodes, a.model.adj.mat, aff
 
   # Log the affinities (ie make them energies) for use with config.energy() function, etc in CRFutil
   log.node.affinities <- log_list(node.affinities)
-  log.edge.affinities <- log_list(edge.affinities)
+  if(length(harmonized.idxs) > 1) {
+    #print("Here graph")
+    log.edge.affinities <- log_list(edge.affinities)
+  } else {
+    #print("Here node only")
+    log.edge.affinities <- NULL # No (log) edge affinities for single nodes
+  }
+
   #print(log.node.affinities)
   #print(log.edge.affinities)
 
@@ -1141,7 +1149,7 @@ get.component.graph.info <- function(component.graph.nodes, a.model.adj.mat, aff
 #'
 #'
 #' @export
-make.component.mrf <- function(con.nodes.vec, prep.info, affinities.info) {
+make.component.mrf_SAFE <- function(con.nodes.vec, prep.info, affinities.info) {
 
   num.nodes <- length(con.nodes.vec)
 
@@ -1221,6 +1229,127 @@ make.component.mrf <- function(con.nodes.vec, prep.info, affinities.info) {
 }
 
 
+#' Make CRF object (an MRF), insert affinities and get logZ, generalized to handle single nodes too
+#'
+#' The function was called
+#'
+#' The function will XXXX
+#'
+#' @param XX The XX
+#' @details XXXX
+#'
+#' @return The function will XX
+#'
+#'
+#' @export
+make.component.mrf <- function(con.nodes.vec, prep.info, affinities.info) {
+
+  num.nodes <- length(con.nodes.vec)
+
+  # Gather required info for the MRF:           # FIX: ONLY PERTAINS TO LOCAL MODELS!!!!!!
+  graph.comp.info <- get.component.graph.info(
+    component.graph.nodes = con.nodes.vec,
+    a.model.adj.mat       = prep.info$model.adjacency.mat, # Will split out adjacency matrix of this graph component from whole model adjacency matrix
+    affinities.info       = affinities.info,
+    a.harmonized.info     = prep.info$QK.harmonized.info)
+  #print(graph.comp.info)
+
+  # For checks:
+  harmonized.node.names <- names(graph.comp.info$node.affinities) # The (harmonized) node names in the graph component. Should be the same as con.nodes.vec
+  harmonized.node.idxs  <- as.numeric(harmonized.node.names)      # Again, should be the same as con.nodes.vec. Just convert to numeric for use as indices later
+  #print(harmonized.node.names)
+  #print(node.affinities)
+  #print(num.nodes)
+
+  if(num.nodes == 1){ # For one node, no need for an MRF. Just do this:
+
+    node.affinities <- graph.comp.info$node.affinities
+    #print("Here")
+    #print(harmonized.node.names)
+    #print(node.affinities)
+    #print(num.nodes)
+
+    # **NOTE: This MUST change if we switch from using counts as the node/edge potentials
+    # Normalize node affinities:
+    if(sum(node.affinities[[1]]) != 1) {
+      node.affinities[[1]] <- node.affinities[[1]]/sum(node.affinities[[1]])
+    }
+    component.mrf                       <- node.affinities
+    graph.comp.info$node.affinities     <- node.affinities # Substitute the normalized affinities
+    graph.comp.info$log.node.affinities <- log_list(node.affinities)  # Souldn't be needed but, substitute the normalized affinities
+    #print(graph.comp.info$node.affinities)
+
+    # Non of these are relevant if there is only one node
+    harmonized.edge.names <- NULL
+    bp.info               <- NULL
+
+    component.mrf.info <- list(
+      harmonized.node.idxs,
+      harmonized.node.names,
+      harmonized.edge.names,
+      graph.comp.info,
+      component.mrf,
+      bp.info
+    )
+
+
+  } else if(num.nodes > 1){ # Go on if there is more then one node
+
+    # Reformat node affinities into a num.nodes x 2 matrix for use with CRF
+    node.affinities       <- t(sapply(1:num.nodes, function(xx){graph.comp.info$node.affinities[[xx]]}))
+
+    # Edge affinities
+    edge.affinities       <- graph.comp.info$edge.affinities
+    # For checks:
+    harmonized.edge.names <- names(edge.affinities)
+    #print(edge.affinities)
+    #print(harmonized.edge.names)
+
+    # Make a basic CRF object from the graph component adjacency matrix and input the affinities
+    component.mrf          <- make.crf(graph.comp.info$component.adj.mat, 2)
+    component.mrf$node.pot <- node.affinities
+    component.mrf$edge.pot <- edge.affinities
+
+    # Use Junction or Loopy BP depending on graph size:
+    if(num.nodes <= 20) {
+      bp.info <- infer.junction(component.mrf)
+    } else {
+      bp.info <- infer.lbp(component.mrf, max.iter = 10000)
+    }
+    #print(bp.info$logZ)
+
+    # Returning graph.comp.info which is redundant, because much of the important affinity info
+    # is contained on component.mrf. BUT, doing this for convenience of formatting (all affinities
+    # are in list form), error checking and safety.
+    # This also ensures a copy of the input affinities follow the logZ they are associated with.
+    component.mrf.info <- list(
+      harmonized.node.idxs,
+      harmonized.node.names,
+      harmonized.edge.names,
+      graph.comp.info,
+      component.mrf,
+      bp.info
+    )
+
+  } else {
+    stop("No nodes in this component: num.nodes = ", num.nodes)
+  }
+
+
+  names(component.mrf.info) <- c(
+    "harmonized.node.idxs.for.mrf",
+    "harmonized.node.names.for.mrf",
+    "harmonized.edge.names.for.mrf",
+    "component.graph.info",
+    "component.mrf",
+    "bp.info"
+  )
+
+  return(component.mrf.info)
+
+}
+
+
 #' Compute the probability of a multinode configuration along with associted info
 #'
 #' The function was called
@@ -1234,7 +1363,7 @@ make.component.mrf <- function(con.nodes.vec, prep.info, affinities.info) {
 #'
 #'
 #' @export
-compute.component.graph.dust.config.prob.info <- function(config.vec, an.mrf.info, ff, printQ=F) {
+compute.component.graph.dust.config.prob.info_SAFE <- function(config.vec, an.mrf.info, ff, printQ=F) {
 
 
   log.Z    <- an.mrf.info$bp.info$logZ
@@ -1278,6 +1407,93 @@ compute.component.graph.dust.config.prob.info <- function(config.vec, an.mrf.inf
   return(prob.info)
 
 }
+
+
+#' Compute the probability of a multinode configuration along with associted info
+#'
+#' The function was called
+#'
+#' The function will XXXX
+#'
+#' @param XX The XX
+#' @details XXXX
+#'
+#' @return The function will XX
+#'
+#'
+#' @export
+compute.component.graph.dust.config.prob.info <- function(config.vec, an.mrf.info, ff, printQ=F) {
+
+  if(length(config.vec) == 1) { # One node
+
+    node.probs <- an.mrf.info$component.graph.info$node.affinities[[1]]
+    # These should already be normalized:
+    if(sum(node.probs) != 1) {
+      print(node.probs)
+      stop("Node 1/0 probabilities don't sum to 1!")
+    }
+
+    if(config.vec == 1) {
+      cfg.prob     <- node.probs[1]
+      cfg.log.prob <- log(cfg.prob)
+    } else if(config.vec == 0) {
+      cfg.prob     <- node.probs[2]
+      cfg.log.prob <- log(cfg.prob)
+    } else {
+      print(config.vec)
+      stop("config.vec elements must be 1 or 0!")
+    }
+
+    # Not applicable for one node
+    log.Z        <- NULL
+    cfg.enrgy    <- NULL
+
+  } else { # Multi-node
+
+    log.Z    <- an.mrf.info$bp.info$logZ
+    edge.mat <- an.mrf.info$component.graph.info$component.edge.mat
+
+    log.node.affinities <- an.mrf.info$component.graph.info$log.node.affinities
+    log.edge.affinities <- an.mrf.info$component.graph.info$log.edge.affinities
+    #print(log.node.affinities)
+    #print(log.edge.affinities)
+
+    cfg.enrgy <- config.energy(
+      config    = config.vec,
+      edges.mat = edge.mat,
+      one.lgp   = log.node.affinities,
+      two.lgp   = log.edge.affinities,
+      ff        = f)
+    cfg.log.prob <- cfg.enrgy - log.Z
+    cfg.prob     <- exp(cfg.log.prob)
+
+  }
+
+  if(printQ==T) {
+    print(paste0("log(Z):     ", log.Z))
+    print(paste0("Energy(X):  ", cfg.enrgy))
+    print(paste0("log[Pr(X)]: ", cfg.log.prob))
+    print(paste0("Pr(X):      ", cfg.prob))
+  }
+
+  prob.info <- list(
+    log.Z,
+    cfg.enrgy,
+    cfg.log.prob,
+    cfg.prob
+  )
+
+  names(prob.info) <- list(
+    "logZ",
+    "energy",
+    "log.prob",
+    "prob"
+  )
+
+  return(prob.info)
+
+}
+
 
 #' Plot a graph using the info from a model prep using grapHD
 #'
