@@ -70,3 +70,51 @@ pick.out.groups<-function(X.mat,all.lbls,grp.picks) {
   return(list(new.X.mat,new.grp.lbls))
 
 }
+
+
+#' Take the log of stuff (vectors, matrices, etc) in a list
+#'
+#' Handy for going from node/edge potentials in list form to node/edge energies (log potentials)
+#'
+#' The function will XXXX
+#'
+#' @param XX The XX
+#' @return The function will XX
+#'
+#'
+#' @export
+log.list <- function(a.list.for.logging) {
+
+  a.logged.list <- lapply(1:length(a.list.for.logging), function(xx){log(a.list.for.logging[[xx]])})
+
+  if(!is.null(names(a.list.for.logging))) {
+    names(a.logged.list) <- names(a.list.for.logging)
+  }
+
+  return(a.logged.list)
+
+}
+
+
+#' Exp a bunch of stuff (vectors, matrices, etc) in a list
+#'
+#' Handy for going from node/edge energies (log potentials) in list form to node/edge potentials
+#'
+#' The function will XXXX
+#'
+#' @param XX The XX
+#' @return The function will XX
+#'
+#'
+#' @export
+exp.list <- function(a.list.for.eing) {
+
+  an.exp.list <- lapply(1:length(an.exp.list), function(xx){log(an.exp.list[[xx]])})
+
+  if(!is.null(names(a.list.for.eing))) {
+    names(an.exp.list) <- names(a.list.for.eing)
+  }
+
+  return(an.exp.list)
+
+}

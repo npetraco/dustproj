@@ -6,7 +6,7 @@
 #'
 #' @param XX The XX
 #' @details The function will put the two sets of dust vectors into the same category space.
-#' It keeps categories which appear in at least one of the vectors and drops categories wich appear
+#' It keeps categories which appear in at least one of the vectors and drops categories which appear
 #' in neither set.
 #' @return The function will XX
 #'
@@ -1090,6 +1090,12 @@ get.component.graph.info <- function(component.graph.nodes, a.model.adj.mat, aff
 
   } # end else
 
+  # Log the affinities (ie make them energies) for use with config.energy() function, etc in CRFutil
+  log.node.affinities <- log_list(node.affinities)
+  log.edge.affinities <- log_list(edge.affinities)
+  #print(log.node.affinities)
+  #print(log.edge.affinities)
+
 
   # Node index/ID translation info after all the reductions/re-indexing we've done:
   idx.translation.mat           <- cbind(a.harmonized.info$QK.Category.IDs[harmonized.idxs], harmonized.idxs, component.graph.idxs)
@@ -1102,7 +1108,9 @@ get.component.graph.info <- function(component.graph.nodes, a.model.adj.mat, aff
     cc.edge.mat,
     idx.translation.mat,
     node.affinities,
-    edge.affinities
+    edge.affinities,
+    log.node.affinities,
+    log.edge.affinities
   )
   names(graph.component.info) <- c(
     "component.adj.mat",
@@ -1110,7 +1118,9 @@ get.component.graph.info <- function(component.graph.nodes, a.model.adj.mat, aff
     "component.edge.mat",
     "idx.translation.mat",
     "node.affinities",
-    "edge.affinities"
+    "edge.affinities",
+    "log.node.affinities",
+    "log.edge.affinities"
   )
 
   return(graph.component.info)
@@ -1143,7 +1153,7 @@ make.component.mrf <- function(con.nodes.vec, prep.info, affinities.info) {
     a.harmonized.info     = prep.info$QK.harmonized.info)
   #print(graph.comp.info)
 
-  # Reformat node affinities for use with CRF
+  # Reformat node affinities into a num.nodes x 2 matrix for use with CRF
   node.affinities       <- t(sapply(1:num.nodes, function(xx){graph.comp.info$node.affinities[[xx]]}))
   # For checks:
   harmonized.node.names <- names(graph.comp.info$node.affinities) # The (harmonized) node names in the graph component. Should be the same as con.nodes.vec
@@ -1175,16 +1185,23 @@ make.component.mrf <- function(con.nodes.vec, prep.info, affinities.info) {
   # This is redundant, but doing this for convenience of formatting, error checking and safety.
   # This ensures a copy of the input affinities follow the logZ they are associated with.
   # They a also contained in component.mrf. The node.affinities are just formatted as a matrix in there.
-  affinities.info.in.this.MRF <- list(
-                                       graph.comp.info$node.affinities,
-                                       graph.comp.info$edge.affinities
-                                     )
+  # affinities.info.in.this.MRF <- list(
+  #                                      graph.comp.info$node.affinities,
+  #                                      graph.comp.info$edge.affinities
+  #                                    )
+  # names(affinities.info.in.this.MRF) <- c("component.graph.node.affinities", "component.graph.edge.affinities")
+
+  # ****Decided to just return graph.comp.info instead, which contains graph.comp.info$node.affinities
+  # and graph.comp.info$edge.affinities among other information need for graph energy calculation
+
+
 
   component.mrf.info <- list(
     harmonized.node.idxs,
     harmonized.node.names,
     harmonized.edge.names,
-    affinities.info.in.this.MRF,
+    #affinities.info.in.this.MRF, # This is in graph.component.info
+    graph.comp.info,
     component.mrf,
     bp.info
   )
@@ -1193,7 +1210,8 @@ make.component.mrf <- function(con.nodes.vec, prep.info, affinities.info) {
     "harmonized.node.idxs.for.mrf",
     "harmonized.node.names.for.mrf",
     "harmonized.edge.names.for.mrf",
-    "affinities.info.for.mrf",
+    #"affinities.info.for.mrf",
+    "component.graph.info",
     "component.mrf",
     "bp.info"
   )
@@ -1202,6 +1220,64 @@ make.component.mrf <- function(con.nodes.vec, prep.info, affinities.info) {
 
 }
 
+
+#' Compute the probability of a multinode configuration along with associted info
+#'
+#' The function was called
+#'
+#' The function will XXXX
+#'
+#' @param XX The XX
+#' @details XXXX
+#'
+#' @return The function will XX
+#'
+#'
+#' @export
+compute.component.graph.dust.config.prob.info <- function(config.vec, an.mrf.info, ff, printQ=F) {
+
+
+  log.Z    <- an.mrf.info$bp.info$logZ
+  edge.mat <- an.mrf.info$component.graph.info$component.edge.mat
+
+  log.node.affinities <- an.mrf.info$component.graph.info$log.node.affinities
+  log.edge.affinities <- an.mrf.info$component.graph.info$log.edge.affinities
+  #print(log.node.affinities)
+  #print(log.edge.affinities)
+
+  cfg.enrgy <- config.energy(
+                              config    = config.vec,
+                              edges.mat = edge.mat,
+                              one.lgp   = log.node.affinities,
+                              two.lgp   = log.edge.affinities,
+                              ff        = f)
+  cfg.log.prob <- cfg.enrgy - log.Z
+  cfg.prob     <- exp(cfg.log.prob)
+
+  if(printQ==T) {
+    print(paste0("log(Z):     ", log.Z))
+    print(paste0("Energy(X):  ", cfg.enrgy))
+    print(paste0("log[Pr(X)]: ", cfg.log.prob))
+    print(paste0("Pr(X):      ", cfg.prob))
+  }
+
+  prob.info <- list(
+    log.Z,
+    cfg.enrgy,
+    cfg.log.prob,
+    cfg.prob
+  )
+
+  names(prob.info) <- list(
+    "logZ",
+    "energy",
+    "log.prob",
+    "prob"
+  )
+
+  return(prob.info)
+
+}
 
 #' Plot a graph using the info from a model prep using grapHD
 #'

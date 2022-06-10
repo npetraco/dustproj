@@ -35,6 +35,7 @@ ccp.list.loc
 gcomp.idx <- 2
 ccp.list.loc[[gcomp.idx]]
 gcomp.mrf.info <- make.component.mrf(ccp.list.loc[[gcomp.idx]], lprep, laff.info)
+gcomp.mrf.info$bp.info
 
 # Check node beliefs compared to observations on graph component nodes that should all be Ks and connected
 data.frame(
@@ -62,6 +63,81 @@ edge.affs.for.compare[edidx]
 ebs[edidx]
 
 # Step 2 compute energy of configuration for nodes in component and normalize
+comp.nd.idxs <- gcomp.mrf.info$harmonized.node.idxs.for.mrf
+comp.nd.idxs
+XKs <- lprep$QK.harmonized.info$K.harmonized[ , comp.nd.idxs]
+XQ  <- lprep$QK.harmonized.info$Q.harmonized[comp.nd.idxs]
+XKs
+
+plot.graph(lprep, Category.IDs.plotQ = T)
+
+
+
+t(as.matrix(XKs[1,]))
+gcomp.mrf.info$component.graph.info$component.edge.mat
+infer.exact(gcomp.mrf.info$component.mrf)
+infer.junction(gcomp.mrf.info$component.mrf)
+infer.lbp(gcomp.mrf.info$component.mrf)
+
+gcomp.mrf.info$component.graph.info$node.affinities
+gcomp.mrf.info$component.graph.info$edge.affinities
+gcomp.mrf.info$component.graph.info$component.edge.mat
+gcomp.mrf.info$component.graph.info$component.adj.mat
+
+# Align??
+data.frame(
+  cbind(
+    gcomp.mrf.info$component.graph.info$component.edge.mat,
+    gcomp.mrf.info$component.graph.info$idx.translation.mat[gcomp.mrf.info$component.graph.info$component.edge.mat[,1],2],
+    gcomp.mrf.info$component.graph.info$idx.translation.mat[gcomp.mrf.info$component.graph.info$component.edge.mat[,2],2]
+  ),
+  names(gcomp.mrf.info$component.graph.info$edge.affinities)
+)
+
+# Define states and feature function:
+s1 <- 1
+s2 <- 0
+f  <- function(y){ as.numeric(c((y==s1),(y==s2))) }
+
+gcomp.mrf.info$component.graph.info$node.affinities
+gcomp.mrf.info$component.graph.info$edge.affinities
+# Log affinities needed
+lnp <- lapply(1:length(gcomp.mrf.info$component.graph.info$node.affinities),
+              function(xx){log(gcomp.mrf.info$component.graph.info$node.affinities[[xx]])})
+lnp
+lep <- lapply(1:length(gcomp.mrf.info$component.graph.info$edge.affinities),
+              function(xx){log(gcomp.mrf.info$component.graph.info$edge.affinities[[xx]])})
+lep
+
+config.energy(config    = t(as.matrix(XKs[1,])),
+              edges.mat = gcomp.mrf.info$component.graph.info$component.edge.mat,
+              one.lgp   = lnp,
+              two.lgp   = lep,
+              ff        = f)
+config.energy(config    = XKs[1,],
+              edges.mat = gcomp.mrf.info$component.graph.info$component.edge.mat,
+              one.lgp   = lnp,
+              two.lgp   = lep,
+              ff        = f)
+
+
+
+lz <- gcomp.mrf.info$bp.info$logZ
+
+enc <- config.energy(
+              #config    = XKs[5,],
+              config    = XQ,
+              edges.mat = gcomp.mrf.info$component.graph.info$component.edge.mat,
+              one.lgp   = lnp,
+              two.lgp   = lep,
+              ff        = f)
+enc
+enc - lz
+exp(enc - lz)
+
+
+compute.config.prob.info()
+
 
 
 
