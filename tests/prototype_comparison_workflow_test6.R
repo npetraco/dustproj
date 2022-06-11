@@ -25,7 +25,7 @@ ccp.list.loc <- connComp(gph.loc)           # Eventually loop over this list
 ccp.list.loc
 
 # Do this for each multinode graph component:
-# Step 1a If graph component is multinode, get required node and edge info, make CRF object and insert graph component affinities
+# Step 1 get required node and edge info, make CRF object and insert graph component affinities (works for single nodes too)
 gcomp.idx      <- 2
 gcomp.mrf.info <- make.component.mrf(ccp.list.loc[[gcomp.idx]], lprep, laff.info)
 
@@ -59,5 +59,3 @@ compute.component.graph.dust.config.prob.info(XKs[5,], gcomp.mrf.info, f, printQ
 compute.component.graph.dust.config.prob.info(XQ,      gcomp.mrf.info, f, printQ = T)
 
 
-# Step 1b If graph component is a single node
-gcomp.idx      <- 1

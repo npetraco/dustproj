@@ -1409,7 +1409,7 @@ compute.component.graph.dust.config.prob.info_SAFE <- function(config.vec, an.mr
 }
 
 
-#' Compute the probability of a multinode configuration along with associted info
+#' Compute the probability of a graph component configuration along with associated info
 #'
 #' The function was called
 #'
@@ -1491,6 +1491,79 @@ compute.component.graph.dust.config.prob.info <- function(config.vec, an.mrf.inf
   )
 
   return(prob.info)
+
+}
+
+
+#' Compute the probability of a an entire dust configuration acros all it's associated graphs, along with associated info
+#'
+#' The function was called
+#'
+#' The function will XXXX
+#'
+#' @param XX The XX
+#' @details XXXX
+#'
+#' @return The function will XX
+#'
+#'
+#' @export
+compute.dust.config.prob.info <- function(config.vec, connected.nodes.list, a.prep.info, an.affinities.info, printQ=F) {
+
+  # Needed for the energy function:
+  ss1 <- 1 # present state
+  ss2 <- 0 # absent state
+  ffn <- function(y){ as.numeric(c((y==ss1),(y==ss2))) }
+
+  component.prob.vec     <- array(NA, length(connected.nodes.list))
+  component.log.prob.vec <- array(NA, length(connected.nodes.list))
+  for(i in 1:length(connected.nodes.list)) {
+
+    if(printQ == T) {
+      print(paste0("Nodes involved in component ", i, ":"))
+      print(connected.nodes.list[[i]])
+    }
+
+    # Put together the MRF for the component graph
+    component.graph.mrf.info  <- make.component.mrf(connected.nodes.list[[i]], a.prep.info, an.affinities.info)
+
+    # ******* CRITICAL!!!!!!!!!!! Nodes indices that make up the component graph
+    component.graph.node.idxs <- component.graph.mrf.info$harmonized.node.idxs.for.mrf
+
+    config.chunck <- config.vec[component.graph.node.idxs]
+    if(printQ == T) {
+      print("Component configuration:")
+      print(config.chunck)
+    }
+
+    pr.info <- compute.component.graph.dust.config.prob.info(config.chunck, component.graph.mrf.info, ffn, printQ = printQ)
+    if(printQ == T) {
+      print("-----------------------------------")
+    }
+
+    component.prob.vec[i]     <- pr.info$prob
+    component.log.prob.vec[i] <- pr.info$log.prob
+
+  }
+
+  config.prob     <- prod(component.prob.vec)
+  config.log.prob <- sum(component.log.prob.vec)
+
+  config.prob.info <- list(
+    component.prob.vec,
+    component.log.prob.vec,
+    config.prob,
+    config.log.prob
+  )
+
+  names(config.prob.info) <- c(
+    "component.probs",
+    "component.log.probs",
+    "config.prob",
+    "config.log.prob"
+  )
+
+  return(config.prob.info)
 
 }
 
