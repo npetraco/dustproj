@@ -60,6 +60,55 @@ harmonize.QtoKs<-function(Q.mat, K.mat) {
 }
 
 
+#' Spits out a summary of essential category and population count data on the Q and K harmonized to each other
+#'
+#' Function XXXX
+#'
+#'
+#' At some point IMPLEMENT OTHER DEPENDENCY STRUCTURES FOR THE Qonlys
+#'
+#' @param XX The XX
+#' @details XXXX
+#'
+#' @return The function will XX
+#'
+#'
+#' @export
+QK.harmonized.summary <- function(a.Q.vec, a.K.mat, population.datamat, population.categories, type="all") {
+
+  QK.harmonized.info     <- harmonize.QtoKs(a.Q.vec, a.K.mat)
+  Q.harmonized           <- QK.harmonized.info$Q.harmonized
+  K.harmonized           <- QK.harmonized.info$K.harmonized
+  K.only.harmonized.idxs <- QK.harmonized.info$K.only.harmonized.idxs
+  Q.only.harmonized.idxs <- QK.harmonized.info$Q.only.harmonized.idxs
+  QK.Category.IDs        <- QK.harmonized.info$QK.Category.IDs
+
+  QK.harmonized.info.mat <- cbind(
+    Q.harmonized,
+    t(K.harmonized),
+    colSums(population.datamat)[QK.Category.IDs]
+  )
+
+  colnames(QK.harmonized.info.mat) <- c("Q", paste0("K",rownames(K.harmonized)), "population.counts")
+  QK.harmonized.info.mat <- data.frame(
+    QK.harmonized.info.mat,
+    population.categories[QK.Category.IDs,]
+  )
+  # print(dim(QK.harmonized.info))
+  # print(dim(population.categories[QK.Category.IDs,]))
+
+  if(type == "K.only") { # Category info shared jointly by Q and K
+    QK.harmonized.info.mat <- QK.harmonized.info.mat[K.only.harmonized.idxs,]
+  }
+  if(type == "Q.only") { # Category info occurring for Q only
+    QK.harmonized.info.mat <- QK.harmonized.info.mat[Q.only.harmonized.idxs,]
+  }
+
+  return(QK.harmonized.info.mat)
+
+}
+
+
 #' Version 1: Harmonize Q (row) vector with K(s) and build adjacency matrix and edge matrix for use with building local Q-K graph and potentials
 #'
 #' Function was make.model.rep in testing scripts
@@ -2000,8 +2049,8 @@ compute.component.graph.dust.config.prob.info <- function(config.vec, an.mrf.inf
 compute.dust.config.prob.info <- function(config.vec, connected.nodes.list, a.prep.info, an.affinities.info, printQ=F) {
 
   # Needed for the energy function:
-  ss1 <- 1 # present state
-  ss2 <- 0 # absent state
+  ss1 <- 1 # category present state
+  ss2 <- 0 # category absent state
   ffn <- function(y){ as.numeric(c((y==ss1),(y==ss2))) }
 
   component.prob.vec     <- array(NA, length(connected.nodes.list))
@@ -2056,6 +2105,122 @@ compute.dust.config.prob.info <- function(config.vec, connected.nodes.list, a.pr
   )
 
   return(config.prob.info)
+
+}
+
+
+#' Wrap up a local analysis into one function
+#'
+#' The function
+#'
+#' The function will XXXX
+#'
+#' @param XX The XX
+#' @details XXXX
+#'
+#' @return The function will XX
+#'
+#'
+#' @export
+local.analysis <- function(a.Q.vec, a.K.mat, ex.vec.num, population.datamat, seed=NULL, normalizeQ=F, scale.factor=1, pruneQ = T, printQ = F, plotQ=F, Category.IDs.plotQ = F) {
+
+  #Set up connections and associated node/edge affinities
+  if(!is.null(seed)){
+    set.seed(seed) # So local simulations don't change every time we re-run this function
+  }
+  a.local.prep <- local.model.prep2(a.Q.vec            = a.Q.vec,
+                                    a.K.mat            = a.K.mat,
+                                    population.datamat = population.datamat,
+                                    printQ             = printQ,
+                                    plotQ              = plotQ,
+                                    Category.IDs.plotQ = Category.IDs.plotQ)
+
+  if(pruneQ == T) {
+    a.local.prep <- prune.local.model(a.QK.local.prep.info.list = a.local.prep,
+                                      plotQ                     = plotQ,
+                                      printQ                    = printQ,
+                                      Category.IDs.plotQ        = Category.IDs.plotQ)
+  }
+
+  a.local.aff.info <- make.QK.local.harmonized.affinities2(a.QK.local.prep.info.list = a.local.prep,
+                                                           normalizeQ                = normalizeQ,
+                                                           scale.factor              = scale.factor,
+                                                           printQ                    = printQ)
+
+  # Graph workflow:
+  # Step 1 separate graph components:
+  a.gph.loc      <- graph_from_adjacency_matrix(a.local.prep$model.adjacency.mat, mode="undirected")
+  a.gph.loc      <- as_graphnel(a.gph.loc)
+  a.ccp.list.loc <- connComp(a.gph.loc)
+
+  # Step 2 get probs for each graph component and the overall prob:
+  input.dust.vecs.harmonized <- rbind(
+    a.local.prep$QK.harmonized.info$Q.harmonized, # Q first then Ks, Maybe this should just be passed in??
+    a.local.prep$QK.harmonized.info$K.harmonized
+  )
+
+  local.prob.info <- compute.dust.config.prob.info(
+                                config.vec           = input.dust.vecs.harmonized[ex.vec.num,],
+                                connected.nodes.list = a.ccp.list.loc,
+                                a.prep.info          = a.local.prep,
+                                an.affinities.info   = a.local.aff.info,
+                                printQ               = printQ)
+
+  return(local.prob.info)
+
+}
+
+
+#' Wrap up a population analysis into one function
+#'
+#' The function
+#'
+#' The function will XXXX
+#'
+#' @param XX The XX
+#' @details XXXX
+#'
+#' @return The function will XX
+#'
+#'
+#' @export
+population.analysis <- function(a.Q.vec, a.K.mat, ex.vec.num, population.datamat, population.adj.mat, normalizeQ=F, scale.factor=1, printQ = F, plotQ=F, Category.IDs.plotQ = F) {
+
+  #Set up connections and associated node/edge affinities
+  a.pop.prep <- population.model.prep2(a.Q.vec            = a.Q.vec,
+                                       a.K.mat            = a.K.mat,
+                                       population.adj.mat = population.adj.mat,
+                                       printQ             = printQ,
+                                       plotQ              = plotQ,
+                                       Category.IDs.plotQ = Category.IDs.plotQ)
+
+  a.pop.aff.info <- make.QK.population.harmonized.affinities2(
+                           a.QK.population.prep.info.list = a.pop.prep,
+                           population.datamat             = population.datamat,
+                           normalizeQ                     = normalizeQ,
+                           scale.factor                   = scale.factor,
+                           printQ                         = printQ)
+
+  # Graph workflow:
+  # Step 1 separate graph components:
+  a.gph.pop      <- graph_from_adjacency_matrix(a.pop.prep$model.adjacency.mat, mode="undirected")
+  a.gph.pop      <- as_graphnel(a.gph.pop)
+  a.ccp.list.pop <- connComp(a.gph.pop)
+
+  # Step 2 get probs for each graph component and the overall prob:
+  input.dust.vecs.harmonized <- rbind(
+    a.pop.prep$QK.harmonized.info$Q.harmonized, # ** NOTE: Q first then Ks, Maybe this should just be passed in??
+    a.pop.prep$QK.harmonized.info$K.harmonized
+  )
+
+  pop.prob.info <- compute.dust.config.prob.info(
+    config.vec           = input.dust.vecs.harmonized[ex.vec.num,],
+    connected.nodes.list = a.ccp.list.pop,
+    a.prep.info          = a.pop.prep,
+    an.affinities.info   = a.pop.aff.info,
+    printQ               = printQ)
+
+  return(pop.prob.info)
 
 }
 

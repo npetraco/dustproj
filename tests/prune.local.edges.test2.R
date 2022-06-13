@@ -35,8 +35,10 @@ compute.dust.config.prob.info(d.vec, ccp.list.loc, lprep.pruned, laff.pruned.inf
 
 # For lots of K variation, keep only nodes that occur alot (> 80%) in the Known set and toss all categories
 # that occur a lot in the population??
+# Tack Q, Ks and pop counts together
 cbind(
   lprep$QK.harmonized.info$Q.harmonized,
-  t(lprep$QK.harmonized.info$K.harmonized)
+  t(lprep$QK.harmonized.info$K.harmonized),
+  colSums(X.pop)[lprep$QK.harmonized.info$QK.Category.IDs]
 )
-# Tack pop counts onto above
+
