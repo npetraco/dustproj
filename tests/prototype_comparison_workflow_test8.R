@@ -11,9 +11,10 @@ K.lbl <- 61 # 1:198 locations
 Q  <- t(X[Q.idx,])            # Questioned dust vector
 Ks <- X[which(lbl == K.lbl),] # Known(s) dust vector(s)
 
-QK.harmonized.summary(Q, Ks, X.pop, categs.occured, type="all")    # All QK harmonized info summary
-QK.harmonized.summary(Q, Ks, X.pop, categs.occured, type="K.only") # Info shared by Q and K summary
-QK.harmonized.summary(Q, Ks, X.pop, categs.occured, type="Q.only") # Info occuring only for Q summary
+qksma <- QK.harmonized.summary(Q, Ks, X.pop, categs.occured, type="all", printQ = T)    # All QK harmonized info summary
+qksmk <- QK.harmonized.summary(Q, Ks, X.pop, categs.occured, type="K.only", printQ = T) # Info shared by Q and K summary
+qksmq <- QK.harmonized.summary(Q, Ks, X.pop, categs.occured, type="Q.only", printQ = T) # Info occuring only for Q summary
+harmonize.QtoKs(Q,Ks)
 
 #-------------------------------
 # Local: Set up connections and associated node/edge affinities

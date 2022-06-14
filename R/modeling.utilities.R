@@ -38,6 +38,93 @@ harmonize.QtoKs<-function(Q.mat, K.mat) {
     stop("Something wrong with column IDs. Have X in front?")
   }
 
+  Q.only.idxs                 <- which(colSums(K.harmonized) == 0)
+  All.QK.Category.IDs.commonQ <- F # Start with F on this and check below
+  No.QK.Category.IDs.commonQ  <- F # Start with F on this and check below
+  if(length(Q.only.idxs) == 0) { # K and Q share all categories in common
+    #print("K and Q share all categories in common")
+    Q.only.idxs        <- NULL
+    #Q.only.idxs        <- (1:ncol(harmonized.vects))
+    K.only.idxs        <- (1:ncol(harmonized.vects))
+    names(K.only.idxs) <- colnames(K.harmonized)[K.only.idxs]
+    Q.only.category.IDs <- NULL
+    #Q.only.category.IDs <- kept.IDs
+    K.only.category.IDs <- kept.IDs
+
+    All.QK.Category.IDs.commonQ <- T # K and Q share all categories in common
+
+  } else {
+    K.only.idxs         <- (1:ncol(harmonized.vects))[-Q.only.idxs]
+    names(K.only.idxs)  <- colnames(K.harmonized)[K.only.idxs]
+    Q.only.category.IDs <- kept.IDs[Q.only.idxs]
+    K.only.category.IDs <- kept.IDs[-Q.only.idxs] # could be kept.IDs[K.only.idxs] too
+
+    if( sum(Q.harmonized[K.only.idxs]) == 0 ){
+      No.QK.Category.IDs.commonQ  <- T # K and Q share no categories in common
+    }
+
+  }
+
+
+  harmonized.info <- list(Q.harmonized, K.harmonized,
+                          kept.IDs,
+                          Q.only.category.IDs, Q.only.idxs,
+                          K.only.category.IDs, K.only.idxs,
+                          All.QK.Category.IDs.commonQ,
+                          No.QK.Category.IDs.commonQ)
+  names(harmonized.info) <- c("Q.harmonized", "K.harmonized",
+                              "QK.Category.IDs",
+                              "Q.only.category.IDs", "Q.only.harmonized.idxs",
+                              "K.only.category.IDs", "K.only.harmonized.idxs",
+                              "All.QK.Category.IDs.commonQ",
+                              "No.QK.Category.IDs.commonQ")
+
+  return(harmonized.info)
+
+}
+
+
+#' "Harmonize" one or more questioned dust vector to a set of known dust vectors
+#'
+#' XXXX
+#'
+#' The function will put the two sets of dust vectors into the same category space
+#'
+#' @param XX The XX
+#' @details The function will put the two sets of dust vectors into the same category space.
+#' It keeps categories which appear in at least one of the vectors and drops categories which appear
+#' in neither set.
+#' @return The function will XX
+#'
+#'
+#' @export
+harmonize.QtoKs_OLD<-function(Q.mat, K.mat) {
+
+  if(!is.matrix(Q.mat)){
+    stop("Q input must be a matrix!")
+  }
+  if(!is.matrix(K.mat)){
+    stop("K input must be a matrix!")
+  }
+
+  harmonized.vects <- rbind(Q.mat, K.mat)
+  non.zeroQ        <- colSums(harmonized.vects) != 0
+  harmonized.vects <- harmonized.vects[,non.zeroQ]
+
+  Q.harmonized <- harmonized.vects[1:nrow(Q.mat),]
+  K.harmonized <- harmonized.vects[(nrow(Q.mat)+1):nrow(harmonized.vects),]
+
+  kept.category.idxs <- which(non.zeroQ==T) # Union of Q and K category indices occurring at least once
+  kept.IDs <- names(kept.category.idxs)
+  # Should be the Category ID numbers labeled at the top of the master data-matrix:
+  kept.IDs <- as.numeric(sapply(1:length(kept.IDs), function(xx){strsplit(kept.IDs[xx],"X")[[1]][2]}))
+
+  if( sum(kept.IDs==kept.category.idxs) != length(kept.category.idxs) ){
+    print(data.frame(names(kept.category.idxs), kept.IDs, kept.category.idxs))
+    stop("Something wrong with column IDs. Have X in front?")
+  }
+
+  # **** ISSUE: Breaks here if K and Q share all indices or no indices!!!!!
   Q.only.idxs        <- which(colSums(K.harmonized) == 0)
   K.only.idxs        <- (1:ncol(harmonized.vects))[-Q.only.idxs]
   names(K.only.idxs) <- colnames(K.harmonized)[K.only.idxs]
@@ -74,7 +161,7 @@ harmonize.QtoKs<-function(Q.mat, K.mat) {
 #'
 #'
 #' @export
-QK.harmonized.summary <- function(a.Q.vec, a.K.mat, population.datamat, population.categories, type="all") {
+QK.harmonized.summary <- function(a.Q.vec, a.K.mat, population.datamat, population.categories, type="all", printQ=F) {
 
   QK.harmonized.info     <- harmonize.QtoKs(a.Q.vec, a.K.mat)
   Q.harmonized           <- QK.harmonized.info$Q.harmonized
@@ -102,6 +189,20 @@ QK.harmonized.summary <- function(a.Q.vec, a.K.mat, population.datamat, populati
   }
   if(type == "Q.only") { # Category info occurring for Q only
     QK.harmonized.info.mat <- QK.harmonized.info.mat[Q.only.harmonized.idxs,]
+  }
+
+  if(printQ == T) {
+    print(QK.harmonized.info.mat)
+    print(       "------------------------------------------------")
+    print(paste0("Number of samples in K.harmonized:       ", nrow(K.harmonized) ))
+    print(paste0("Total number of Categories:              ", length(QK.Category.IDs) ))
+    print(paste0("Number of Categories shared by Q and Ks: ", length(K.only.harmonized.idxs) ))
+    print(paste0("Number of Categories in Q only:          ", length(Q.only.harmonized.idxs) ))
+    print(paste0("All Q and K Categories in common?:       ", QK.harmonized.info$All.QK.Category.IDs.commonQ))
+    print(paste0("No common Q and K Categories?:           ", QK.harmonized.info$No.QK.Category.IDs.commonQ))
+    print(       "------------------------------------------------")
+    #QK.harmonized.info$All.QK.Category.IDs.commonQ
+    #QK.harmonized.info$No.QK.Category.IDs.commonQ
   }
 
   return(QK.harmonized.info.mat)
