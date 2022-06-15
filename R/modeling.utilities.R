@@ -27,6 +27,12 @@ harmonize.QtoKs<-function(Q.mat, K.mat) {
 
   Q.harmonized <- harmonized.vects[1:nrow(Q.mat),]
   K.harmonized <- harmonized.vects[(nrow(Q.mat)+1):nrow(harmonized.vects),]
+  if("integer" %in% class(K.harmonized)) { # If Kmat is just one row, do this so colSums works
+    K.harmonized.tmp       <- array(K.harmonized, c(1, length(K.harmonized)))
+    colnames(K.harmonized.tmp) <- names(K.harmonized)
+    K.harmonized <- K.harmonized.tmp
+  }
+
 
   kept.category.idxs <- which(non.zeroQ==T) # Union of Q and K category indices occurring at least once
   kept.IDs <- names(kept.category.idxs)
@@ -1361,7 +1367,7 @@ population.model.prep2 <- function(a.Q.vec, a.K.mat, population.adj.mat, printQ=
   rownames(model.adj.mat) <- all.KQ.idxs # **NOTE: Takes IDs from NC-IDs -> "Harmonized"-IDs wrt this adjacency matrix
   colnames(model.adj.mat) <- all.KQ.idxs # **NOTE: Takes IDs from NC-IDs -> "Harmonized"-IDs wrt this adjacency matrix
 
-  model.edge.mat <- NULL # This should stay NULL if there are no edges recovered from the population
+  model.edge.mat <- NULL # **NOTE: model.edge.mat should stay NULL if there are no edges recovered from the population
   for(i in 1:num.nodes) {
     for(j in 1:num.nodes) {
       if(i < j) {
