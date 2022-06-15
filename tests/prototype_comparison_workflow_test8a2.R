@@ -4,21 +4,22 @@ samp.loc.sizes <- table(lbl)
 samp.loc.sizes[samp.loc.sizes >= 4]
 
 # Test:
-# Q same location as as Ks, so all Categories will be shared in common
+# #Q same location as as Ks, so all Categories will be shared in common
 # which(lbl == 122)
 # Q.idx <- 461  # 1:828 dust vectors
 # lbl[Q.idx]  # True location name of the Questioned
 # K.lbl <- 122 # 1:198 locations
-#
-# Q  <- t(X[Q.idx,])            # Questioned dust vector
-# Ks <- X[which(lbl == K.lbl),] # Known(s) dust vector(s)
-# Ks
-# Ks <- Ks[-4,]
+
 
 # Smaller test:
 Q.idx <- 9  # 1:828 dust vectors
 lbl[Q.idx]  # True location name of the Questioned
 K.lbl <- 61 # 1:198 locations
+
+Q  <- t(X[Q.idx,])            # Questioned dust vector
+Ks <- X[which(lbl == K.lbl),] # Known(s) dust vector(s)
+#Ks
+#Ks <- Ks[-4,]
 
 
 QK.sma <- QK.harmonized.summary(Q, Ks, X.pop, categs.occured, type="all", printQ = T)    # All QK harmonized info summary
@@ -27,6 +28,8 @@ QK.smq <- QK.harmonized.summary(Q, Ks, X.pop, categs.occured, type="Q.only", pri
 
 # ============ Analysis ========
 dv.num <- 1 # Dust vector number for analysis. Q is 1. Ks start with 2.
+
+harmonize.QtoKs(Q,Ks)
 
 #-------------------------------
 # Local

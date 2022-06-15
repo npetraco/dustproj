@@ -86,7 +86,7 @@ harmonize.QtoKs<-function(Q.mat, K.mat) {
 
 #' "Harmonize" one or more questioned dust vector to a set of known dust vectors
 #'
-#' XXXX
+#' OLD version
 #'
 #' The function will put the two sets of dust vectors into the same category space
 #'
@@ -214,7 +214,7 @@ QK.harmonized.summary <- function(a.Q.vec, a.K.mat, population.datamat, populati
 #'
 #' Function was make.model.rep in testing scripts
 #'
-#' The function FULLY CONNECTS the categories in the K sample.
+#' T**NOTE: he function FULLY CONNECTS the categories in the K sample.
 #'
 #' @param XX The XX
 #' @details XXXX
@@ -345,7 +345,7 @@ local.model.prep <- function(a.Q.vec, a.K.mat, population.adj.mat=NULL, model.ty
 
 #' Version 2: Harmonize Q (row) vector with K(s) and build adjacency matrix and edge matrix for use with building local Q-K graph and potentials
 #'
-#' Function was make.model.rep in testing scripts
+#' **NOTE: This OLD version2 breaks if minForest doesn't find any edges. See next latest version 2 which is NOT labeled OLDXX
 #'
 #' This version runs a real/simulated K sample through grapHD to get a local graph. ALSO
 #' this version currently treats Qonly categories as INDEPENDENT in the local model. We
@@ -360,7 +360,7 @@ local.model.prep <- function(a.Q.vec, a.K.mat, population.adj.mat=NULL, model.ty
 #'
 #'
 #' @export
-local.model.prep2 <- function(a.Q.vec, a.K.mat, population.datamat, num.local.sims=NULL, est.typ="MLE", prob.adj =0.005, printQ=F, plotQ=F, Category.IDs.plotQ=T) {
+local.model.prep2_OLD <- function(a.Q.vec, a.K.mat, population.datamat, num.local.sims=NULL, est.typ="MLE", prob.adj =0.005, printQ=F, plotQ=F, Category.IDs.plotQ=T) {
 
   QK.harmonized.info     <- harmonize.QtoKs(a.Q.vec, a.K.mat)
   K.harmonized           <- QK.harmonized.info$K.harmonized
@@ -493,9 +493,182 @@ local.model.prep2 <- function(a.Q.vec, a.K.mat, population.datamat, num.local.si
 }
 
 
+#' Version 2: Harmonize Q (row) vector with K(s) and build adjacency matrix and edge matrix for use with building local Q-K graph and potentials
+#'
+#' Function XXXXX
+#'
+#' This version runs a real/simulated K sample through grapHD to get a local graph. ALSO
+#' this version currently treats Qonly categories as INDEPENDENT in the local model. We
+#' justify this because the Qonly categories were not observed in anny of the K samples
+#'
+#' At some point IMPLEMENT OTHER DEPENDENCY STRUCTURES FOR THE Qonlys
+#'
+#' @param XX The XX
+#' @details XXXX
+#'
+#' @return The function will XX
+#'
+#'
+#' @export
+local.model.prep2 <- function(a.Q.vec, a.K.mat, population.datamat, num.local.sims=NULL, est.typ="MLE", prob.adj =0.005, printQ=F, plotQ=F, Category.IDs.plotQ=T) {
+
+  QK.harmonized.info     <- harmonize.QtoKs(a.Q.vec, a.K.mat)
+  K.harmonized           <- QK.harmonized.info$K.harmonized
+  K.only.harmonized.idxs <- QK.harmonized.info$K.only.harmonized.idxs
+  Q.only.harmonized.idxs <- QK.harmonized.info$Q.only.harmonized.idxs
+  QK.Category.IDs        <- QK.harmonized.info$QK.Category.IDs
+
+  num.nodes <- ncol(K.harmonized)
+
+  # Simulate QK (based on K.harmonized) for use with making local potentials.
+  # **NOTE Qonlys are simulated too, but we'll only be using the Konly columns for now (6-8-22)
+  pvec <- groupwise.category.freq.mat2(K.harmonized, rep(1, nrow(K.harmonized)), est.type = est.typ, prob.adj = prob.adj)
+
+  # Build out local (harmonized) K sample to be num.local.sims + number of real K samples
+  if(is.null(num.local.sims)) {
+    num.local.sims.loc <-  nrow(population.datamat) - nrow(K.harmonized) # Default to balance the local sample counts with the population size
+  } else {
+    num.local.sims.loc <- num.local.sims
+  }
+
+  # **NOTE (again), we WON'T be using the sims in the Qonly columns.
+  # We will be substituting the Qonly sims with the actual population data.
+  # We'll do this for storage because We'll use the population Qonly data to estimate
+  # Pr(Categ_Qonly) in the ver-2 make affinities function because they will be treated as independent
+  QK.harmonized.local <- simulate.dust.sample.simple(num.local.sims.loc, prob.vec = pvec)
+  QK.harmonized.local <- rbind(
+    K.harmonized,       # This is the real K sample (harmonized)
+    QK.harmonized.local # This is the sims
+  )
+  #print(dim(QK.harmonized.local))
+
+  # NEW approach in version 2: Use real/simulated Ks with grapHD to get a "local" graph.
+  # In version 1, we just fully connected all the Ks
+  Konly.sims <- QK.harmonized.local[,K.only.harmonized.idxs] # data for K nodes only (real and simulated)
+
+  # Input into grapHD must be in terms of factors for discrete data:
+  Konly.sims <- sapply(1:ncol(Konly.sims), function(xx){as.factor(Konly.sims[,xx])})
+  Konly.sims <- data.frame(Konly.sims, stringsAsFactors = T)
+  rownames(Konly.sims) <- NULL
+  colnames(Konly.sims) <- NULL
+  #print(Konly.sims)
+
+  # Build graph for Konly, assuming Qonlys are independent because they appeared in NONE of the K samples
+  # print("Must have grapHD installed, which is not on CRAN. Also turn it on manually")
+  KForest               <- minForest(Konly.sims, stat = "AIC")
+  #print(KForest)
+  #print(KForest$edges)
+  #print(nrow(KForest$edges))
+
+  if(nrow(KForest$edges) == 0) { # No edges found by minForest
+
+    edges.harmonized      <- NULL
+    minForest.edge.scores <- NULL
+    check.edges           <- NULL
+    local.adjacency.mat   <- array(0, c(num.nodes,num.nodes) )
+    minForest.edges       <- NULL
+
+    if(printQ == T) {
+      print("**** No edges found by minForest ****")
+    }
+
+  } else { # At least one edge found by minForest
+
+    # Edges come out re-indexed because Qonly columns were dropped.
+    # Re-index them back to harmonized indices
+    edges.harmonized <- cbind(
+      K.only.harmonized.idxs[ KForest$edges[,1] ],
+      K.only.harmonized.idxs[ KForest$edges[,2] ]
+    )
+    rownames(edges.harmonized) <- NULL
+    colnames(edges.harmonized) <- c("K.harmonized.idx1","K.harmonized.idx2")
+    #print(edges.harmonized)
+
+    minForest.edge.scores           <- data.frame(KForest$edges, edges.harmonized, KForest$statSeq) # Return these
+    colnames(minForest.edge.scores) <- c("idx1","idx2","K.harmonized.idx1","K.harmonized.idx2", "minForest.score")
+    check.edges                     <- KForest$error # Return these. ** NOTE: If these are not null, CHECK these with fisher test??
+    #print(KForest)
+    #print(minForest.edge.scores)
+
+    local.adjacency.mat <- edges2adj(edges.harmonized, n.nodes = num.nodes)
+    #print(dim(local.adjacency.mat))
+
+    minForest.edges <- data.frame(edges.harmonized, KForest$edges)
+    #print(data.frame(minForest.edge.scores, minForest.edges))
+
+  }
+
+
+  if(plotQ==T) {
+    local.grapHD <- as.gRapHD(edges.harmonized, p=num.nodes) # Should still work even if edges.harmonized is NULL
+
+    v <- 1:num.nodes
+    node.cols <- rep("", num.nodes)
+    node.cols[K.only.harmonized.idxs] <- "green"
+    node.cols[Q.only.harmonized.idxs] <- "red"
+    #print(node.cols)
+
+    # These should be the Konly categories that weren't there 100% of the time. Color them yellow.
+    K.harmonized.counts <- colSums(K.harmonized)
+    K.semis <- which( (K.harmonized.counts < nrow(K.harmonized)) & (K.harmonized.counts !=0))
+    node.cols[K.semis] <- "yellow"
+
+    if(Category.IDs.plotQ==T) {
+      node.names <- paste0("X",QK.Category.IDs)
+    } else {
+      node.names <- v
+    }
+
+    if(!is.null(dev.list())){
+      dev.off()
+    }
+    plot(local.grapHD, numIter=1000, vert.label=T, vert.radii=rep(.028,length(v)),
+         vert.labels=node.names, vert.hl=v, col.hl=node.cols)
+  }
+
+  # Substitute in Qonly population data into QK.harmonized.local (the real/sim local sample) for
+  # calculating local Pr(Qonly) later (IE we treat the local Qonly as independent, so we don't care
+  # which other categories they co-occur with. We just need them for independent node computations.
+  # **NOTE: the Qonly columns and rows in the local adjacency matrix should all be 0
+  QK.harmonized.local[,Q.only.harmonized.idxs] <- population.datamat[ , QK.Category.IDs[Q.only.harmonized.idxs] ]
+
+  # Check that the substitution was made correctly
+  #scheckv <- nrow(population.datamat)
+  #print(scheckv == sum(QK.harmonized.local[,Q.only.harmonized.idxs[1]] == population.datamat[,QK.Category.IDs[Q.only.harmonized.idxs[1]] ]))
+  #print(scheckv == sum(QK.harmonized.local[,Q.only.harmonized.idxs[2]] == population.datamat[,QK.Category.IDs[Q.only.harmonized.idxs[2]] ]))
+  #print(scheckv == sum(QK.harmonized.local[,Q.only.harmonized.idxs[3]] == population.datamat[,QK.Category.IDs[Q.only.harmonized.idxs[3]] ]))
+  #check.all.Qonlysubs <- sapply(1:length(Q.only.harmonized.idxs), function(xx){scheckv == sum(QK.harmonized.local[,Q.only.harmonized.idxs[xx]] == population.datamat[,QK.Category.IDs[Q.only.harmonized.idxs[xx]] ])})
+  #print(check.all.Qonlysubs)
+
+
+  local.info <- list(
+    QK.harmonized.info,    # Because we harmonized before we did anythong in here, so keep this for the record
+    QK.harmonized.local,   # Real and Simulated K data. Population Qonly data
+    local.adjacency.mat,   # Adjacency matrix for this local model
+    edges.harmonized,      # Edge matrix for this local model
+    minForest.edges,       # Translation between Konly.harmonized.idxs, and their re-indexed version used by minForest
+    minForest.edge.scores, # Edge scores and edge indices from minForest
+    KForest                # The grapHD minForest object for the Konlys
+  )
+
+  names(local.info) <- c(
+    "QK.harmonized.info",    # Because we harmonized before we did anything in here, so keep this for the record
+    "QK.harmonized.local",   # Real and SIMULATED K data. Population Qonly data. Hence the LOCAL extension on the name
+    "model.adjacency.mat",   # Adjacency matrix for this local model
+    "edge.mat",              # Edge matrix for this local model
+    "minForest.edges",       # Translation between Konly.harmonized.idxs, and their re-indexed version used by minForest
+    "minForest.edge.scores", # Edge scores and edge indices from minForest
+    "KForest"                # The grapHD minForest object for the Konlys
+  )
+
+  return(local.info)
+
+}
+
+
 #' Prune a local minForest model. THIS IS A MESS. RE-WRITE IT!
 #'
-#' The function XXXX
+#' The function is the OLD version
 #'
 #' The function will XXXX
 #'
@@ -690,7 +863,7 @@ prune.local.model <- function(a.QK.local.prep.info.list, printQ=F, plotQ=F, Cate
 #'
 #' The function was called make.QK.harmonized.affinities in harmonize_dustvectors_test4.R
 #'
-#' The function will XXXX
+#' The function goes along with local.model.prep which is now obsolete
 #'
 #' @param XX The XX
 #' @details XXXX
@@ -1109,7 +1282,9 @@ make.QK.local.harmonized.affinities2 <- function(a.QK.local.prep.info.list, norm
 #'
 #' FXXXXXX
 #'
-#' The function will XXXX
+#' The function was re-written (slightly) to be more inline with local.model.prep2
+#' and local.model.affinities2, and renames population.model.prep2.
+#' See latest version NOT labeled OLD
 #'
 #' @param XX The XX
 #' @details XXXX
@@ -1118,7 +1293,7 @@ make.QK.local.harmonized.affinities2 <- function(a.QK.local.prep.info.list, norm
 #'
 #'
 #' @export
-population.model.prep <- function(a.Q.vec, a.K.mat, population.adj.mat, printQ=F) {
+population.model.prep_OLD <- function(a.Q.vec, a.K.mat, population.adj.mat, printQ=F) {
 
   harmonized.info <- harmonize.QtoKs(a.Q.vec, a.K.mat)
 
@@ -1186,12 +1361,12 @@ population.model.prep2 <- function(a.Q.vec, a.K.mat, population.adj.mat, printQ=
   rownames(model.adj.mat) <- all.KQ.idxs # **NOTE: Takes IDs from NC-IDs -> "Harmonized"-IDs wrt this adjacency matrix
   colnames(model.adj.mat) <- all.KQ.idxs # **NOTE: Takes IDs from NC-IDs -> "Harmonized"-IDs wrt this adjacency matrix
 
-  model.edge.mat <- NULL
+  model.edge.mat <- NULL # This should stay NULL if there are no edges recovered from the population
   for(i in 1:num.nodes) {
     for(j in 1:num.nodes) {
       if(i < j) {
         if(model.adj.mat[i,j] == 1) {
-          model.edge.mat <- rbind(model.edge.mat, c(i,j)) # Should be the harmonized node indices
+          model.edge.mat <- rbind(model.edge.mat, c(i,j)) # Should be the harmonized node indices.
         }
       }
     }
@@ -1449,11 +1624,10 @@ make.QK.population.harmonized.affinities <- function(a.harmonized.info.list, an.
 #' @export
 make.QK.population.harmonized.affinities2 <- function(a.QK.population.prep.info.list, population.datamat, normalizeQ=F, scale.factor=1, printQ=F) {
 
-#make.QK.local.harmonized.affinities2  ->            (a.QK.local.prep.info.list,                          normalizeQ=F, scale.factor=1, printQ=F)
-#function header was                   ->             a.harmonized.info.list,         population.datamat, normalizeQ=F,                 printQ=F
 
   a.harmonized.info.list <- a.QK.population.prep.info.list$QK.harmonized.info # Because we harmonized before we did anything in here, so keep this for the record
   an.edge.mat            <- a.QK.population.prep.info.list$edge.mat           # Edge matrix for this local model
+  #print(an.edge.mat)
 
   #K.harmonized           <- a.harmonized.info.list$K.harmonized
   K.only.harmonized.idxs <- a.harmonized.info.list$K.only.harmonized.idxs
@@ -1527,101 +1701,110 @@ make.QK.population.harmonized.affinities2 <- function(a.QK.population.prep.info.
 
   }
 
+  names(node.affinities) <- as.character(1:num.nodes)
+
 
   # Edge affinities:
-  num.edges       <- nrow(an.edge.mat)
-  edge.affinities <- rep(list(NULL), num.edges)
+  if(is.null(an.edge.mat)) { # If there are no edges recovered from the population:
 
-  for(i in 1:num.edges) {
+    edge.affinities <- NULL
 
-    # Recycling code from make.QK.local. Some of it is superfluous
-    idx1 <- an.edge.mat[i,1]
-    idx2 <- an.edge.mat[i,2]
+  } else { # There should be at least one edge here:
 
-    if(idx1 %in% K.only.harmonized.idxs) {
-      idx1.st      <- "K"                           # Don't need here but: i.e. index is in K and Q index set
-      idx1.ID      <- QK.Category.IDs[idx1]         # Here, get all data from population
-      node1.sample <- population.datamat[, idx1.ID] # Here, get all data from population
-    } else if(idx1 %in% Q.only.harmonized.idxs) {
-      idx1.st      <- "Qonly"                       # Don't need here but: i.e. the index set K didn't have this one
-      idx1.ID      <- QK.Category.IDs[idx1]         # Here, get all data from population
-      node1.sample <- population.datamat[, idx1.ID] # Here, get all data from population
-    } else {
-      #stop("Node", i ," = ", idx1, "not found in K or Q index sets!")
-      stop("Node ", idx1, "of edge", i, "not found in K or Q index sets!")
-    }
+    num.edges       <- nrow(an.edge.mat)
+    edge.affinities <- rep(list(NULL), num.edges)
 
-    if(idx2 %in% K.only.harmonized.idxs) {
-      idx2.st      <- "K"                           # Don't need here but: i.e. index is in K and Q index set
-      idx2.ID      <- QK.Category.IDs[idx2]         # Here, get all data from population
-      node2.sample <- population.datamat[, idx2.ID] # Here, get all data from population
-    } else if(idx2 %in% Q.only.harmonized.idxs) {
-      idx2.st      <- "Qonly"                       # Don't need here but: i.e. index is in K and Q index set
-      idx2.ID      <- QK.Category.IDs[idx2]         # Here, get all data from population
-      node2.sample <- population.datamat[, idx2.ID] # Here, get all data from population
-    } else {
-      #stop("Node", i ," = ", idx2, "not found in K or Q index sets!")
-      stop("Node ", idx2, "of edge", i, "not found in K or Q index sets!")
-    }
+    for(i in 1:num.edges) {
 
-    # Check for NAs in node samples which indicate something went wrong:
-    if(NA %in% node1.sample) {
-      print(paste0("Node ", idx1, " of edge ", i, " is: ", idx1.st, " with idx1.ID = ", idx1.ID))
-      stop("NAs in node1.sample for edge: ", i, " Something is wrong!")
-    }
-    if(NA %in% node2.sample) {
-      print(paste0("Node ", idx2, " of edge ", i, " is: ", idx2.st, " with idx1.ID = ", idx2.ID))
-      stop("NAs in node2.sample for edge: ", i, " Something is wrong!")
-    }
+      # Recycling code from make.QK.local. Some of it is superfluous
+      idx1 <- an.edge.mat[i,1]
+      idx2 <- an.edge.mat[i,2]
 
-
-    # Edge "affinity" matrix:
-    eam <- table(
-      factor(node1.sample, levels = c(1,0)),
-      factor(node2.sample, levels = c(1,0))
-    )
-
-    # Fix any 0s to 1s in eam because we cant take log(0) to get parameter (energy)
-    zero.idxs <- which(eam == 0, arr.ind = T)
-
-    # Something is wrong if 4 0s come up:
-    if(nrow(zero.idxs) == 4){
-      print(paste0("Node ", idx1, " of edge ", i, " is: ", idx1.st))
-      print(paste0("Node ", idx2, " of edge ", i, " is: ", idx2.st))
-      print(eam)
-      print(paste(nrow(zero.idxs), "0-counts replaced for edge:", i))
-      stop("Something is wrong. Shouldn't be 4 0s to replace!")
-    }
-
-    if(nrow(zero.idxs) != 0 ) {
-      eam[zero.idxs] <- 1
-      if(printQ==T) {
-        print(paste(nrow(zero.idxs), "0-counts replaced for edge:", i))
+      if(idx1 %in% K.only.harmonized.idxs) {
+        idx1.st      <- "K"                           # Don't need here but: i.e. index is in K and Q index set
+        idx1.ID      <- QK.Category.IDs[idx1]         # Here, get all data from population
+        node1.sample <- population.datamat[, idx1.ID] # Here, get all data from population
+      } else if(idx1 %in% Q.only.harmonized.idxs) {
+        idx1.st      <- "Qonly"                       # Don't need here but: i.e. the index set K didn't have this one
+        idx1.ID      <- QK.Category.IDs[idx1]         # Here, get all data from population
+        node1.sample <- population.datamat[, idx1.ID] # Here, get all data from population
+      } else {
+        #stop("Node", i ," = ", idx1, "not found in K or Q index sets!")
+        stop("Node ", idx1, "of edge", i, "not found in K or Q index sets!")
       }
+
+      if(idx2 %in% K.only.harmonized.idxs) {
+        idx2.st      <- "K"                           # Don't need here but: i.e. index is in K and Q index set
+        idx2.ID      <- QK.Category.IDs[idx2]         # Here, get all data from population
+        node2.sample <- population.datamat[, idx2.ID] # Here, get all data from population
+      } else if(idx2 %in% Q.only.harmonized.idxs) {
+        idx2.st      <- "Qonly"                       # Don't need here but: i.e. index is in K and Q index set
+        idx2.ID      <- QK.Category.IDs[idx2]         # Here, get all data from population
+        node2.sample <- population.datamat[, idx2.ID] # Here, get all data from population
+      } else {
+        #stop("Node", i ," = ", idx2, "not found in K or Q index sets!")
+        stop("Node ", idx2, "of edge", i, "not found in K or Q index sets!")
+      }
+
+      # Check for NAs in node samples which indicate something went wrong:
+      if(NA %in% node1.sample) {
+        print(paste0("Node ", idx1, " of edge ", i, " is: ", idx1.st, " with idx1.ID = ", idx1.ID))
+        stop("NAs in node1.sample for edge: ", i, " Something is wrong!")
+      }
+      if(NA %in% node2.sample) {
+        print(paste0("Node ", idx2, " of edge ", i, " is: ", idx2.st, " with idx1.ID = ", idx2.ID))
+        stop("NAs in node2.sample for edge: ", i, " Something is wrong!")
+      }
+
+
+      # Edge "affinity" matrix:
+      eam <- table(
+        factor(node1.sample, levels = c(1,0)),
+        factor(node2.sample, levels = c(1,0))
+      )
+
+      # Fix any 0s to 1s in eam because we cant take log(0) to get parameter (energy)
+      zero.idxs <- which(eam == 0, arr.ind = T)
+
+      # Something is wrong if 4 0s come up:
+      if(nrow(zero.idxs) == 4){
+        print(paste0("Node ", idx1, " of edge ", i, " is: ", idx1.st))
+        print(paste0("Node ", idx2, " of edge ", i, " is: ", idx2.st))
+        print(eam)
+        print(paste(nrow(zero.idxs), "0-counts replaced for edge:", i))
+        stop("Something is wrong. Shouldn't be 4 0s to replace!")
+      }
+
+      if(nrow(zero.idxs) != 0 ) {
+        eam[zero.idxs] <- 1
+        if(printQ==T) {
+          print(paste(nrow(zero.idxs), "0-counts replaced for edge:", i))
+        }
+      }
+
+      # Label dimensions by local node ID index
+      names(attributes(eam)$dimnames) <- c(idx1, idx2)
+
+      # normalize to %-scale
+      if(normalizeQ == T){
+        #ceiling(eam/sum(eam) * 100)
+        eam <- eam/sum(eam) * scale.factor
+      }
+
+      edge.affinities[[i]] <- eam
+
+      if(printQ == T) {
+        print(paste0("Node ", idx1, " of edge ", i, " is: ", idx1.st))
+        print(paste0("Node ", idx2, " of edge ", i, " is: ", idx2.st))
+        print(eam)
+      }
+
     }
 
-    # Label dimensions by local node ID index
-    names(attributes(eam)$dimnames) <- c(idx1, idx2)
-
-    # normalize to %-scale
-    if(normalizeQ == T){
-      #ceiling(eam/sum(eam) * 100)
-      eam <- eam/sum(eam) * scale.factor
-    }
-
-    edge.affinities[[i]] <- eam
-
-    if(printQ == T) {
-      print(paste0("Node ", idx1, " of edge ", i, " is: ", idx1.st))
-      print(paste0("Node ", idx2, " of edge ", i, " is: ", idx2.st))
-      print(eam)
-    }
+    names(edge.affinities) <- sapply(1:num.edges, function(xx){paste0(an.edge.mat[xx,], collapse = "-")})
 
   }
 
-
-  names(node.affinities) <- as.character(1:num.nodes)
-  names(edge.affinities) <- sapply(1:num.edges, function(xx){paste0(an.edge.mat[xx,], collapse = "-")})
 
   affinity.info <- list(node.affinities, edge.affinities)
   names(affinity.info) <- c("node.affinities", "edge.affinities")
@@ -2050,7 +2233,7 @@ compute.component.graph.dust.config.prob.info_SAFE <- function(config.vec, an.mr
 
 #' Compute the probability of a graph component configuration along with associated info
 #'
-#' The function was called
+#' This version can deal with single nodes
 #'
 #' The function will XXXX
 #'
@@ -2237,10 +2420,12 @@ local.analysis <- function(a.Q.vec, a.K.mat, ex.vec.num, population.datamat, see
                                     Category.IDs.plotQ = Category.IDs.plotQ)
 
   if(pruneQ == T) {
-    a.local.prep <- prune.local.model(a.QK.local.prep.info.list = a.local.prep,
-                                      plotQ                     = plotQ,
-                                      printQ                    = printQ,
-                                      Category.IDs.plotQ        = Category.IDs.plotQ)
+    if(!is.null(a.local.prep$edge.mat)){ # Only attempt to prune if there are local edges.
+      a.local.prep <- prune.local.model(a.QK.local.prep.info.list = a.local.prep,
+                                        plotQ                     = plotQ,
+                                        printQ                    = printQ,
+                                        Category.IDs.plotQ        = Category.IDs.plotQ)
+    }
   }
 
   a.local.aff.info <- make.QK.local.harmonized.affinities2(a.QK.local.prep.info.list = a.local.prep,
@@ -2374,4 +2559,85 @@ plot.graph <- function(a.prep.info, Category.IDs.plotQ=T){
   plot(local.grapHD, numIter=1000, vert.label=T, vert.radii=rep(.028,length(v)),
        vert.labels=node.names, vert.hl=v, col.hl=node.cols)
 
+}
+
+
+#' Wrapped up  local and population analysis for a Q vs a set of Ks
+#'
+#' XXXX
+#'
+#' The function
+#'
+#' @param XX The XX
+#'
+#' @return The function will XX
+#'
+#'
+#' @export
+ombibus.standard.analysis <- function(a.Q.idx, a.Q.lbl=NA, a.Q, a.K.lbl, a.Kmat, population.datamat, population.adj.mat, pruneQ=T, seed=NULL, listQ=F) {
+
+  a.local.prob.info <- local.analysis(
+    a.Q.vec            = a.Q,    #
+    a.K.mat            = a.Kmat, #
+    ex.vec.num         = 1,      # Dust vec to get probs for. 1 is Q. Ks start at 2
+    population.datamat = population.datamat,  #
+    seed               = seed,   # Comment out for random local sims for each execution
+    normalizeQ         = F,      #
+    scale.factor       = 1,      #
+    pruneQ             = pruneQ, # Prune minForest edges with fisher tests?
+    printQ             = F,      #
+    plotQ              = F,      #
+    Category.IDs.plotQ = F)
+
+  a.pop.prob.info <- population.analysis(
+    a.Q.vec            = a.Q,    #
+    a.K.mat            = a.Kmat, #
+    ex.vec.num         = 1,      # Dust vec to get probs for. 1 is Q. Ks start at 2
+    population.datamat = population.datamat,  #
+    population.adj.mat = population.adj.mat,
+    normalizeQ         = F,      #
+    scale.factor       = 1,      #
+    printQ             = F,      #
+    plotQ              = F,      #
+    Category.IDs.plotQ = F)
+
+  if(listQ == T) {
+    analysis.info <- list(
+      a.Q.idx,                   # DB # of Q so we can find it
+      a.Q.lbl,                   # True label of Q if we have it
+      a.K.lbl,                   # Label of Ks we are comparing Q to
+      a.local.prob.info$config.prob,
+      a.local.prob.info$config.log.prob,
+      a.pop.prob.info$config.prob,
+      a.pop.prob.info$config.log.prob)
+
+    names(analysis.info) <- c(
+      "Q.idx",                 # DB # of Q so we can find it
+      "Q.lbl",                 # True label of Q if we have it
+      "K.lbl",                 # Label of Ks we are comparing Q to
+      "local.config.prob",
+      "local.config.log.prob",
+      "pop.config.prob",
+      "pop.config.log.prob")
+  } else {
+    analysis.info <- data.frame(
+      a.Q.idx,                   # DB # of Q so we can find it
+      a.Q.lbl,                   # True label of Q if we have it
+      a.K.lbl,                   # Label of Ks we are comparing Q to
+      a.local.prob.info$config.prob,
+      a.local.prob.info$config.log.prob,
+      a.pop.prob.info$config.prob,
+      a.pop.prob.info$config.log.prob)
+
+    colnames(analysis.info) <- c(
+      "Q.idx",                 # DB # of Q so we can find it
+      "Q.lbl",                 # True label of Q if we have it
+      "K.lbl",                 # Label of Ks we are comparing Q to
+      "local.config.prob",
+      "local.config.log.prob",
+      "pop.config.prob",
+      "pop.config.log.prob")
+  }
+
+  return(analysis.info)
 }
