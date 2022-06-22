@@ -2580,7 +2580,7 @@ plot.graph <- function(a.prep.info, Category.IDs.plotQ=T){
 #'
 #'
 #' @export
-ombibus.standard.analysis <- function(a.Q.idx, a.Q.lbl=NA, a.Q, a.K.lbl, a.Kmat, population.datamat, population.adj.mat, pruneQ=T, seed=NULL, listQ=F) {
+ombibus.standard.analysis <- function(a.Q.idx, a.Q.lbl=NA, a.Q, a.K.lbl, a.Kmat, population.datamat, population.adj.mat, pruneQ=T, seed=NULL, listQ=F, plotQ=F) {
 
   a.local.prob.info <- local.analysis(
     a.Q.vec            = a.Q,    #
@@ -2592,7 +2592,7 @@ ombibus.standard.analysis <- function(a.Q.idx, a.Q.lbl=NA, a.Q, a.K.lbl, a.Kmat,
     scale.factor       = 1,      #
     pruneQ             = pruneQ, # Prune minForest edges with fisher tests?
     printQ             = F,      #
-    plotQ              = F,      #
+    plotQ              = plotQ,      #
     Category.IDs.plotQ = F)
 
   a.pop.prob.info <- population.analysis(
